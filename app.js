@@ -24,7 +24,7 @@ sio = io.listen(server);
 gameServer.io =  sio;
 sio.on('connection', function(client) {
   client.userid = UUID();
-//  players.push(client.userid); fdsa
+//  players.push(client.userid); 
   client.emit('onconnected', { id: client.userid } );
   //gameServer.findGame(client);
   gameServer.playerJoin(client);
