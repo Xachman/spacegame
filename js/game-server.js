@@ -5,7 +5,8 @@ var verbose     = true;
 require('./game-master.js');
 gameServer.inputs = [];
 gameServer.players = [];
-gameServer.playerids = [];
+gameServer.clientState = {};
+gameServer.clientState.players = [];
 gameServer.createGame = function(player) {
   var thegame = {
     id: UUID(),
@@ -28,7 +29,7 @@ gameServer.findGame = function(player) {
   //  console.log('games: '+this.games);
     for (var gameid in this.games) {
       if(this.games[gameid].player_count < 2) {
-        console.log('joined');
+//console.log('joined');
         joinedGame = true;
         this.joinGame(gameid, player);
       }
@@ -42,34 +43,17 @@ gameServer.findGame = function(player) {
   }
 };
 
-gameServer.joinGame = function(id, player) {
-  var thegame = this.games[id];
-  thegame.player_client = player;
-  thegame.player_count++;
-  gameServer.startGame(thegame);
-};
-
-gameServer.startGame = function(game) {
-  //console.log(game.player_client);
-  game.player_client.send('s.j.' + game.player_host.userid);
-  game.player_client.game = game;
-  this.update();
-      //set this flag, so that the update loop can run it.
-  game.active = true;
-};
-
 gameServer.update  = function() {
   setTimeout(this.update.bind(this), 100);
   if(this.inputs.length > 0) {
     for(var i = 0; i < this.inputs.length; i ++) {
       input = this.inputs[i];
-      console.log('id: '+input.id+', key: '+input.key+', timestamp: '+input.timestamp);
+    //  console.log('id: '+input.id+', key: '+input.key+', timestamp: '+input.timestamp);
       this.processPhysics(input.id, input.key);
     }
     this.inputs = [];
   }
 //  console.log('update');
-
 };
 
 gameServer.processMessage = function(data) {
@@ -93,29 +77,33 @@ gameServer.addInputPool = function(id, key, timestamp) {
 }
 
 gameServer.playerJoin =  function(player){
-  player.x = 0;
-  player.y = 0;
+  player.clientState = {};
+  player.clientState.x = Math.floor((Math.random() * 350) + 1);
+  player.clientState.y = Math.floor((Math.random() * 350) + 1);
+  player.clientState.id = player.userid;
+//  console.log(player);
+//  var clientPlayer = {x: player.x, y: player.y, id:player.userid};
     this.players.push(player);
-    this.addPlayerId(player.userid);
+  //  this.addClientPlayer(clientPlayer);
     this.updatedPlayers();
   //  console.log(this.players);
 
 };
 
 gameServer.updatePosition = function(x, y, playerid) {
-  var players =  this.players;
-  for (var i = 0; i < players.length; i++) {
-    var player = players[i];
-    console.log('sending');
-    player.send('s.u.'+x+'_'+y+'_'+playerid);
-  }
+  //var player =  this.findPlayer(playerid);
+  //console.log(player.x);
+  // player.x = x;
+  // player.y = y;
+  //this.updateClientState();
+  this.updatedPlayers();
 }
 gameServer.updatedPlayers = function() {
   var players =  this.players;
   for (var i = 0; i < players.length; i++) {
     var player = players[i];
-    console.log('sending');
-    player.send('s.pu'+this.getPlayerIds().join('_'));
+  //  console.log('sending');
+    player.send('s.pu.'+JSON.stringify(this.getClientPlayers()));
   }
 }
 gameServer.processPhysics = function(userid, key) {
@@ -126,11 +114,12 @@ gameServer.processPhysics = function(userid, key) {
   var downArrow = 40;
   var spaceBar = 32;
   var player = this.findPlayer(userid);
+  player = player.clientState;
 console.log('processning phys: '+key);
   switch(parseInt(key)) {
     case upArrow:
-      console.log('processning up arrow');
-      this.updatePosition(player.x, player.y++, player.userid);
+    //  console.log('processning up arrow');
+      this.updatePosition(player.x, player.y--, player.userid);
       break;
     case leftArrow:
       this.updatePosition(player.x-- , player.y, player.userid);
@@ -139,7 +128,7 @@ console.log('processning phys: '+key);
       this.updatePosition(player.x++, player.y , player.userid);
       break;
     case downArrow:
-      this.updatePosition(player.x, player.y-- , player.userid);
+      this.updatePosition(player.x, player.y++ , player.userid);
       break;
     case spaceBar:
       break;
@@ -156,9 +145,26 @@ gameServer.findPlayer = function(id) {
   }
 }
 
-gameServer.addPlayerId = function(id) {
-  this.playerids.push(id);
+gameServer.addClientPlayer = function(player) {
+  this.clientState.players.push(player);
 }
-gameServer.getPlayerIds = function() {
-  return this.playerids;
+gameServer.getClientPlayers = function() {
+  var returnVal = [];
+  var players =  this.players;
+  for(var i = 0; i < players.length; i ++) {
+    returnVal.push(players[i].clientState);
+  }
+  return returnVal;
+}
+gameServer.removePlayerById = function(id) {
+  var players =  this.players;
+  for (var i = 0; i < players.length; i++) {
+    var player = players[i];
+    if(player.userid === id) {
+      players.splice(i,1);
+      //this.removeClientPlayerById(id);
+      this.updatedPlayers();
+      return;
+    }
+  }
 }

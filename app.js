@@ -34,7 +34,7 @@ sio.on('connection', function(client) {
       //When this client disconnects
   client.on('disconnect', function () {
     console.log('\t socket.io:: client disconnected ' + client.userid );
-
+    gameServer.removePlayerById(client.userid);
   });
   //console.log(players);
   client.on('message', function(client){

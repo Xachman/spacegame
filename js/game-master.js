@@ -10,6 +10,7 @@ function GameMaster(instance) {
   this.self = 0;
 
   this.onconnect = function(data) {
+    console.log(data);
     this.self = data.id;
   };
 
@@ -42,9 +43,16 @@ GameMaster.prototype.draw = function() {
   ctx.fillRect(0,0,50,50);
   //console.log('drawn');
 };
-GameMaster.prototype.reDraw = function(x, y) {
+GameMaster.prototype.reDraw = function() {
   this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  this.ctx.fillRect(x, y,50,50);
+  var players = this.players;
+
+  for(var i = 0; i < players.length; i++) {
+    var player = players[i];
+    console.log(player.x+', '+player.y);
+    this.ctx.fillRect(player.x, player.y,50,50);
+  }
+
 }
 GameMaster.prototype.processUpdate = function(data) {
   console.log('data: '+ data);
@@ -56,8 +64,10 @@ GameMaster.prototype.processUpdate = function(data) {
 
 }
 GameMaster.prototype.updatePlayers = function(data) {
-  playerids = data.split('_');
-  this.players = playerids;
+  var players = JSON.parse(data);
+  console.log(players);
+  this.players = players;
+  this.reDraw();
 }
 GameMaster.prototype.clientOnNetMessage = function(data) {
   //console.log('message from server');
@@ -65,7 +75,7 @@ GameMaster.prototype.clientOnNetMessage = function(data) {
     var command = commands[0];
     var subcommand = commands[1] || null;
     var commanddata = commands[2] || null;
-
+    console.log('server data: '+data);
     switch(command) {
         case 's': //server message
 
@@ -112,6 +122,7 @@ GameMaster.prototype.clientConnectServer = function(data) {
     //Note that the data is the object we sent from the server, as is. So we can assume its id exists.
     console.log( 'Connected successfully to the socket.io server. My server side ID is ' + data.id );
     player.id = data.id;
+    GM.onconnect(data);
     GM.draw();
   });
   sio.on('message', this.clientOnNetMessage.bind(this));
