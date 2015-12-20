@@ -20,23 +20,22 @@
 		 	<!-- Notice the URL, this is handled by socket.io on the server automatically, via express -->
 		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
     <script src="/js/phaser.min.js" ></script>
-    <script src="/js/game.js" ></script>
+    <script src="/js/game-master.js" ></script>
 
 			<!-- This will create a connection to socket.io, and print the user serverid that we sent from the server side. -->
 		<script type="text/javascript">
+		gameMaster = new GameMaster();
 				//This is all that needs
-			var socket = io.connect('/');
-				//Now we can listen for that event
-			socket.on('onconnected', function( data ) {
-					//Note that the data is the object we sent from the server, as is. So we can assume its id exists.
-		  		console.log( 'Connected successfully to the socket.io server. My server side ID is ' + data.id );
-		  	});
+		gameMaster.clientConnectServer();
+		window.onkeydown = function(e) {
+			gameMaster.keyPress(e);
+		};
 		</script>
 
 	</head>
 
 	<body>
-		<div id="gameDiv"> </div>
+		<div id="gameDiv"><canvas id="gameCan" width="400" height="450" style="background: #000;"></canvas></div>
 
 	</body>
 </html>
