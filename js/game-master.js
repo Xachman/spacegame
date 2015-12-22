@@ -49,13 +49,13 @@ GameMaster.prototype.reDraw = function() {
 
   for(var i = 0; i < players.length; i++) {
     var player = players[i];
-    console.log(player.x+', '+player.y);
+  //  console.log(player.x+', '+player.y);
     this.ctx.fillRect(player.x, player.y,50,50);
   }
 
 }
 GameMaster.prototype.processUpdate = function(data) {
-  console.log('data: '+ data);
+//  console.log('data: '+ data);
     var commands = data.split('_');
     var x   = commands[0];
     var y   = commands[1];
@@ -64,18 +64,19 @@ GameMaster.prototype.processUpdate = function(data) {
 
 }
 GameMaster.prototype.updatePlayers = function(data) {
+  //console.log(data);
   var players = JSON.parse(data);
-  console.log(players);
+  //console.log(players);
   this.players = players;
   this.reDraw();
 }
 GameMaster.prototype.clientOnNetMessage = function(data) {
   //console.log('message from server');
-    var commands = data.split('.');
+    var commands = data.split('.', 2);
     var command = commands[0];
     var subcommand = commands[1] || null;
-    var commanddata = commands[2] || null;
-    console.log('server data: '+data);
+    var commanddata = this.truncateMessage(data);
+  //  console.log('server data: '+commanddata);
     switch(command) {
         case 's': //server message
 
@@ -111,7 +112,19 @@ GameMaster.prototype.clientOnNetMessage = function(data) {
     } //command
 
 }; //cli
+GameMaster.prototype.truncateMessage = function(str) {
+  var count = 0;
+  for (var i = 0; i < str.length; i++) {
+    if(str.charAt(i) === '.') {
 
+      count++;
+    }
+    if(count === 2) {
+    //  console.log('char');
+      return str.substring(i+1, str.length);
+    }
+  }
+}
 GameMaster.prototype.clientConnectServer = function(data) {
   this.socket = io.connect();
   var player = this.self;
@@ -173,30 +186,14 @@ GameMaster.prototype.clientResetPositions = function() {
 };
 GameMaster.prototype.keyPress = function(e) {
 //  console.log(e.keyCode);
-  var upArrow = 38;
-  var leftArrow = 37;
-  var rightArrow = 39;
-  var downArrow = 40;
-  var spaceBar = 32;
-
-
-  switch(e.keyCode) {
-    case upArrow:
-      break;
-    case leftArrow:
-      break;
-    case rightArrow:
-      break;
-    case downArrow:
-      break;
-    case spaceBar:
-      break;
-  }
-  this.sendToServer(e.keyCode);
+  this.sendToServer(e.keyCode, 1);
+}
+GameMaster.prototype.keyUp = function(e) {
+  this.sendToServer(e.keyCode, 0);
 }
 
-GameMaster.prototype.sendToServer = function(key) {
-  this.socket.send('c.i.'+this.self+'.'+key);
+GameMaster.prototype.sendToServer = function(key, condition) {
+  this.socket.send('c.i.'+this.self+'.'+key+'.'+condition);
 }
 
 if( 'undefined' != typeof global ) {

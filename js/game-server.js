@@ -7,6 +7,10 @@ gameServer.inputs = [];
 gameServer.players = [];
 gameServer.clientState = {};
 gameServer.clientState.players = [];
+// gameServer.playerAtts = {
+//   speed: 50,
+//   inputs: []
+// };
 gameServer.createGame = function(player) {
   var thegame = {
     id: UUID(),
@@ -42,17 +46,18 @@ gameServer.findGame = function(player) {
     this.createGame(player);
   }
 };
-
+gameServer.time;
 gameServer.update  = function() {
   setTimeout(this.update.bind(this), 100);
-  if(this.inputs.length > 0) {
-    for(var i = 0; i < this.inputs.length; i ++) {
-      input = this.inputs[i];
-    //  console.log('id: '+input.id+', key: '+input.key+', timestamp: '+input.timestamp);
-      this.processPhysics(input.id, input.key);
-    }
-    this.inputs = [];
-  }
+  // if(this.inputs.length > 0) {
+  //   for(var i = 0; i < this.inputs.length; i ++) {
+  //     input = this.inputs[i];
+  //   //  console.log('id: '+input.id+', key: '+input.key+', timestamp: '+input.timestamp);
+  //     this.processPhysics(input.id, input.key, input.condition, input.timestamp);
+  //   }
+  //   this.inputs = [];
+  // }
+  this.updatedPlayers();
 //  console.log('update');
 };
 
@@ -64,23 +69,79 @@ gameServer.processMessage = function(data) {
     case 'c':
       switch(type) {
         case 'i':
-          this.addInputPool(commands[2], commands[3], commands[4]);
+          this.processInput(commands[2], commands[3], commands[4], commands[5]);
           break;
       }
       break;
   }
 };
-
-gameServer.addInputPool = function(id, key, timestamp) {
-  var inputs = this.inputs;
-  inputs.push({id: id, key: key, timestamp: timestamp});
+gameServer.processInput = function(id, key, condition, timestamp){
+//  console.log(id);
+  var player = this.findPlayer(id);
+  con = parseInt(condition);
+  if(con === 1 && this.checkKey(player, key)) {
+//  console.log(player.userid);
+  player.atts.inputs.push({key: key, timestamp: timestamp});
+  //    console.log(player.atts.inputs);
+  }else if(con === 0){
+  //  this.processPhysics(id, key);
+    this.clearInput(player, key);
+  }
+};
+gameServer.processInputs = function() {
+  var players = this.players;
+  for(var i = 0; i < players.length; i++) {
+    var player = players[i];
+    var inputs = player.atts.inputs;
+  //  console.log(player.userid);
+  //  console.log(inputs);
+    for(var x = 0; x < inputs.length; x++) {
+      //console.log(inputs[x]);
+      this.processPhysics(player.userid, inputs[x].key);
+    }
+  }
 }
-
+gameServer.checkKey = function(player ,key) {
+  var inputs = player.atts.inputs;
+  for(var i = 0; i < inputs.length; i ++) {
+    if(inputs[i].key === key) {
+      return false;
+    }
+  }
+  return true;
+}
+gameServer.addInputPool = function(id, key, condition, timestamp) {
+  var inputs = this.inputs;
+  inputs.push({id: id, key: key, condition: parseInt(condition), timestamp: timestamp});
+}
+gameServer.findInput = function(id, key) {
+  var player = this.findPlayer(id);
+  var inputs = player.atts.inputs;
+  for(var i = 0; i < inputs.length; i++) {
+    if(inputs[i].key === key) {
+      return inputs[i];
+    }
+  }
+}
+gameServer.clearInput = function(player, key) {
+  var inputs = player.atts.inputs;
+  for(var i = 0; i < inputs.length; i++) {
+    if(inputs[i].key === key) {
+      //console.log('input cleared');
+      inputs.splice(i,1);
+      return;
+    }
+  }
+}
 gameServer.playerJoin =  function(player){
   player.clientState = {};
   player.clientState.x = Math.floor((Math.random() * 350) + 1);
   player.clientState.y = Math.floor((Math.random() * 350) + 1);
   player.clientState.id = player.userid;
+  player.atts = {
+    speed: 50,
+    inputs: []
+  }
 //  console.log(player);
 //  var clientPlayer = {x: player.x, y: player.y, id:player.userid};
     this.players.push(player);
@@ -90,22 +151,19 @@ gameServer.playerJoin =  function(player){
 
 };
 
-gameServer.updatePosition = function(x, y, playerid) {
-  //var player =  this.findPlayer(playerid);
-  //console.log(player.x);
-  // player.x = x;
-  // player.y = y;
-  //this.updateClientState();
-  this.updatedPlayers();
-}
+// gameServer.updatePosition = function(x, y, playerid) {
+//   this.updatedPlayers();
+// }
 gameServer.updatedPlayers = function() {
+  this.processInputs();
   var players =  this.players;
   for (var i = 0; i < players.length; i++) {
     var player = players[i];
   //  console.log('sending');
-    player.send('s.pu.'+JSON.stringify(this.getClientPlayers()));
+      player.send('s.pu.'+JSON.stringify(this.getClientPlayers()));
   }
 }
+
 gameServer.processPhysics = function(userid, key) {
   //console.log(e.keyCode);
   var upArrow = 38;
@@ -114,27 +172,40 @@ gameServer.processPhysics = function(userid, key) {
   var downArrow = 40;
   var spaceBar = 32;
   var player = this.findPlayer(userid);
+  var input = this.findInput(userid, key);
+  var dif =  Date.now() - input.timestamp;
+  var speed = player.atts.speed;
+  //console.log(player.userid);
+  input.timestamp = Date.now();
   player = player.clientState;
-console.log('processning phys: '+key);
-  switch(parseInt(key)) {
-    case upArrow:
-    //  console.log('processning up arrow');
-      this.updatePosition(player.x, player.y--, player.userid);
-      break;
-    case leftArrow:
-      this.updatePosition(player.x-- , player.y, player.userid);
-      break;
-    case rightArrow:
-      this.updatePosition(player.x++, player.y , player.userid);
-      break;
-    case downArrow:
-      this.updatePosition(player.x, player.y++ , player.userid);
-      break;
-    case spaceBar:
-      break;
-  }
+  //  console.log('processing phys: '+key);
+    switch(parseInt(key)) {
+      case upArrow:
+      //  console.log('processning up arrow');
+        var calc = (player.y - (speed * (dif / 1000)))
+        player.y = calc;
+      //  console.log(calc);
+      //  this.updatePosition(player.x, calc, player.userid);
+        break;
+      case leftArrow:
+        var calc = (player.x - (speed * (dif / 1000)))
+        player.x = calc;
+      //  this.updatePosition(calc, player.y, player.userid);
+        break;
+      case rightArrow:
+        var calc = (player.x + (speed * (dif / 1000)))
+        player.x = calc;
+      //  this.updatePosition(calc, player.y , player.userid);
+        break;
+      case downArrow:
+        var calc = (player.y + (speed * (dif / 1000)))
+        player.y = calc;
+        //this.updatePosition(player.x, calc , player.userid);
+        break;
+      case spaceBar:
+        break;
+    }
 }
-
 gameServer.findPlayer = function(id) {
   var players =  this.players;
   for (var i = 0; i < players.length; i++) {
