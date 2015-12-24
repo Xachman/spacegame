@@ -173,8 +173,7 @@ GameMaster.prototype.keyUp = function(e) {
 }
 
 GameMaster.prototype.sendToServer = function(key, condition) {
-  console.log(Date.UTC());
-  this.socket.send('c.i.'+this.self+'.'+key+'.'+condition+'.'+Date.now());
+  this.socket.send('c.i.'+this.self+'.'+key+'.'+condition);
 }
 
 if( 'undefined' != typeof global ) {
