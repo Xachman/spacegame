@@ -8,7 +8,14 @@ function GameMaster(instance) {
 
   this.players = [];
   this.self = 0;
-
+  this.player = {
+    inputs: {
+      upArrow: {condition: false, key: 38},
+      downArrow: {condition: false, key: 40},
+      leftArrow: {condition: false, key: 37},
+      rightArrow: {condition: false, key: 39}
+    }
+  }
   this.onconnect = function(data) {
     console.log(data);
     this.self = data.id;
@@ -54,21 +61,12 @@ GameMaster.prototype.reDraw = function() {
   }
 
 }
-GameMaster.prototype.processUpdate = function(data) {
-//  console.log('data: '+ data);
-    var commands = data.split('_');
-    var x   = commands[0];
-    var y   = commands[1];
-    var id  = commands[2];
-    this.reDraw(parseInt(x),parseInt(y));
-
-}
 GameMaster.prototype.updatePlayers = function(data) {
   //console.log(data);
   var players = JSON.parse(data);
   //console.log(players);
   this.players = players;
-  this.reDraw();
+  //this.reDraw();
 }
 GameMaster.prototype.clientOnNetMessage = function(data) {
   //console.log('message from server');
@@ -103,6 +101,7 @@ GameMaster.prototype.clientOnNetMessage = function(data) {
                     this.processUpdate(commanddata);
                     break;
                 case 'pu':
+                    //if(this.players <= 0)
                     this.updatePlayers(commanddata);
                     break;
 
@@ -163,39 +162,121 @@ GameMaster.prototype.client_onping = function(data) {
 };
 
 
-GameMaster.prototype.clientResetPositions = function() {
-
-    var player_host = this.players.self.host ?  this.players.self : this.players.other;
-    var player_client = this.players.self.host ?  this.players.other : this.players.self;
-
-        //Host always spawns at the top left.
-    player_host.pos = { x:20,y:20 };
-    player_client.pos = { x:500, y:200 };
-
-        //Make sure the local player physics is updated
-    this.players.self.old_state.pos = this.pos(this.players.self.pos);
-    this.players.self.pos = this.pos(this.players.self.pos);
-    this.players.self.cur_state.pos = this.pos(this.players.self.pos);
-
-        //Position all debug view items to their owners position
-    this.ghosts.server_pos_self.pos = this.pos(this.players.self.pos);
-
-    this.ghosts.server_pos_other.pos = this.pos(this.players.other.pos);
-    this.ghosts.pos_other.pos = this.pos(this.players.other.pos);
-
-};
 GameMaster.prototype.keyPress = function(e) {
-//  console.log(e.keyCode);
+  console.log(e.keyCode);
   this.sendToServer(e.keyCode, 1);
+  this.processPlayerInput(e.keyCode, 1);
 }
 GameMaster.prototype.keyUp = function(e) {
   this.sendToServer(e.keyCode, 0);
+  this.processPlayerInput(e.keyCode, 0);
 }
 
 GameMaster.prototype.sendToServer = function(key, condition) {
-  this.socket.send('c.i.'+this.self+'.'+key+'.'+condition);
+  this.socket.send('c.i.'+this.self+'.'+key+'.'+condition+'.'+Date.now());
 }
 
 if( 'undefined' != typeof global ) {
     module.exports = global.GameMaster = GameMaster;
+}
+
+GameMaster.prototype.updateLoop = function() {
+  var game = this;
+  requestAnimationFrame(this.updateLoop.bind(this));
+  var now = new Date().getTime();
+  dt = now - (this.time || now);
+
+  this.time = now;
+
+  this.processPhysics(dt);
+
+
+}
+
+GameMaster.prototype.processPhysics = function(dt) {
+  this.processPlayerSelfPhysics(dt);
+  this.reDraw();
+}
+GameMaster.prototype.processPlayerSelfPhysics = function(dt) {
+//  console.log('hi');
+  var speed = 50;
+  var player = this.findPlayer(this.self);
+  var inputs = this.player.inputs;
+  keys = Object.keys(inputs);
+  for(var i = 0; i < keys.length; i++) {
+    var input = inputs[keys[i]];
+
+    if(input.condition === true){
+      this.processPlayerPhysics(input, dt);
+    }
+  }
+}
+GameMaster.prototype.processPlayerPhysics = function(input, dt) {
+  var player = this.findPlayer(this.self);
+  var upArrow = 38;
+  var leftArrow = 37;
+  var rightArrow = 39;
+  var downArrow = 40;
+  var spaceBar = 32;
+  var speed = 50 / 1000
+  switch(input.key) {
+    case upArrow:
+      //console.log((player.y));
+      player.y = player.y - (speed * dt);
+    break;
+    case leftArrow:
+      player.x = player.x - (speed * dt);
+    break;
+    case rightArrow:
+      player.x = player.x + (speed * dt);
+    break;
+    case downArrow:
+      player.y = player.y + (speed * dt);
+    break;
+    case spaceBar:
+
+    break;
+  }
+}
+GameMaster.prototype.processPlayerInput = function(key, condition) {
+  var upArrow = 38;
+  var leftArrow = 37;
+  var rightArrow = 39;
+  var downArrow = 40;
+  var spaceBar = 32;
+
+  switch(key) {
+    case upArrow:
+      this.updateKeyCondition(this.player.inputs.upArrow, condition);
+    break;
+    case leftArrow:
+      this.updateKeyCondition(this.player.inputs.leftArrow, condition);
+    break;
+    case rightArrow:
+      this.updateKeyCondition(this.player.inputs.rightArrow, condition);
+    break;
+    case downArrow:
+      this.updateKeyCondition(this.player.inputs.downArrow, condition);
+    break;
+    case spaceBar:
+
+    break;
+  }
+}
+
+GameMaster.prototype.updateKeyCondition = function(playerInput, condition) {
+  if(condition === 1) {
+    playerInput.condition = true;
+  } else {
+    playerInput.condition = false;
+  }
+}
+GameMaster.prototype.findPlayer = function(id) {
+  var players = this.players;
+  for (var i = 0; i < players.length; i++) {
+    var player = players[i];
+    if(player.id === id) {
+      return player;
+    }
+  }
 }

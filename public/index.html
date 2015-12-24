@@ -23,8 +23,15 @@
     <script src="/js/game-master.js" ></script>
 
 			<!-- This will create a connection to socket.io, and print the user serverid that we sent from the server side. -->
+
+
+	</head>
+
+	<body>
+		<div id="gameDiv"><canvas id="gameCan" width="400" height="450" style="background: #000;"></canvas></div>
 		<script type="text/javascript">
 		gameMaster = new GameMaster();
+		gameMaster.draw();
 				//This is all that needs
 		gameMaster.clientConnectServer();
 		window.onkeydown = function(e) {
@@ -33,12 +40,8 @@
 		window.onkeyup = function(e) {
 			gameMaster.keyUp(e);
 		};
+		gameMaster.updateLoop();
+		console.log(gameMaster);
 		</script>
-
-	</head>
-
-	<body>
-		<div id="gameDiv"><canvas id="gameCan" width="400" height="450" style="background: #000;"></canvas></div>
-
 	</body>
 </html>
