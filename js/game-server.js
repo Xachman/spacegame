@@ -62,6 +62,7 @@ gameServer.update  = function() {
 };
 
 gameServer.processMessage = function(data) {
+  data += '.'+Date.now();
   var commands  = data.split('.');
   var command   = commands[0];
   var type      = commands[1];

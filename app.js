@@ -38,8 +38,6 @@ sio.on('connection', function(client) {
   });
   //console.log(players);
   client.on('message', function(client){
-
-    client;
     gameServer.processMessage(client);
     //console.log(client);
   //  console.log('client_input');
