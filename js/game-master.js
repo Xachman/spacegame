@@ -17,7 +17,7 @@ function GameMaster(instance) {
     }
   }
   this.onconnect = function(data) {
-    console.log(data);
+    //console.log(data);
     this.self = data.id;
   };
 
@@ -27,7 +27,7 @@ GameMaster.prototype.clientConnect = function() {
   this.socket = io();
 
   this.socket.on('onconnected', function(data){
-    console.log('hi');
+  //  console.log('hi');
     this.onconnect(data);
   });
 
@@ -43,7 +43,7 @@ GameMaster.prototype.startGame = function() {
 
 GameMaster.prototype.draw = function() {
   this.canvas = document.getElementById('gameCan');
-  console.log(this.canvas);
+//  console.log(this.canvas);
   this.ctx = this.canvas.getContext("2d");
   var ctx = this.ctx;
   ctx.fillStyle = "#fff";
@@ -163,7 +163,7 @@ GameMaster.prototype.client_onping = function(data) {
 
 
 GameMaster.prototype.keyPress = function(e) {
-  console.log(e.keyCode);
+//  console.log(e.keyCode);
   this.sendToServer(e.keyCode, 1);
   this.processPlayerInput(e.keyCode, 1);
 }
