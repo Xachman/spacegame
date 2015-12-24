@@ -62,7 +62,6 @@ gameServer.update  = function() {
 };
 
 gameServer.processMessage = function(data) {
-  data += '.'+Date.now();
   var commands  = data.split('.');
   var command   = commands[0];
   var type      = commands[1];
@@ -77,7 +76,6 @@ gameServer.processMessage = function(data) {
   }
 };
 gameServer.processInput = function(id, key, condition, timestamp){
-//  console.log(id);
   var player = this.findPlayer(id);
   con = parseInt(condition);
   if(con === 1 && this.checkKey(player, key)) {
@@ -175,6 +173,7 @@ gameServer.processPhysics = function(userid, key) {
   var player = this.findPlayer(userid);
   var input = this.findInput(userid, key);
   var dif =  Date.now() - input.timestamp;
+  console.log(dif);
   var speed = player.atts.speed;
   //console.log(player.userid);
   input.timestamp = Date.now();
