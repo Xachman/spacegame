@@ -65,7 +65,22 @@ GameMaster.prototype.updatePlayers = function(data) {
   //console.log(data);
   var players = JSON.parse(data);
   //console.log(players);
+  var x = 0;
+  var y = 0;
+  if(this.players.length > 0) {
+    var self = this.findPlayer(this.self);
+    x = self.x;
+    y = self.y;
+  }
   this.players = players;
+  // self from server
+  var servSelf = this.findPlayer(this.self);
+  condition = x <= servSelf.x + 10  && x >= servSelf.x - 10 && y <= servSelf.y + 10 && y >= servSelf.y - 10;
+
+  if(condition ) {
+    servSelf.x = x;
+    servSelf.y = y;
+  }
   //this.reDraw();
 }
 GameMaster.prototype.clientOnNetMessage = function(data) {
