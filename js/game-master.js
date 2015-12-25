@@ -5,7 +5,9 @@ function GameMaster(instance) {
   if(!this.server) {
     this.clientConnect();
   }
-
+  this.packageRecivedTime = 0;
+  this.packages = [];
+  this.playersPos = [];
   this.players = [];
   this.self = 0;
   this.player = {
@@ -52,10 +54,15 @@ GameMaster.prototype.draw = function() {
 };
 GameMaster.prototype.reDraw = function() {
   this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  var players = this.players;
-
+  var players = this.playersPos;
+  var self = this.findPlayer(this.self);
   for(var i = 0; i < players.length; i++) {
     var player = players[i];
+    if(player.id === self.id) {
+      player = self;
+    }else{
+      //console.log(player.x);
+    }
   //  console.log(player.x+', '+player.y);
     this.ctx.fillRect(player.x, player.y,50,50);
   }
@@ -64,6 +71,12 @@ GameMaster.prototype.reDraw = function() {
 GameMaster.prototype.updatePlayers = function(data) {
   //console.log(data);
   var players = JSON.parse(data);
+
+  this.packages.push(data);
+  if(this.packages.length > 2) {
+    this.packages.shift();
+  }
+  this.packageRecivedTime = Date.now();
   //console.log(players);
   var x = 0;
   var y = 0;
@@ -72,6 +85,7 @@ GameMaster.prototype.updatePlayers = function(data) {
     x = self.x;
     y = self.y;
   }
+  this.playersPos = JSON.parse(this.packages[0]);
   this.players = players;
   // self from server
   var servSelf = this.findPlayer(this.self);
@@ -126,6 +140,33 @@ GameMaster.prototype.clientOnNetMessage = function(data) {
     } //command
 
 }; //cli
+GameMaster.prototype.interpolate = function(dt) {
+  var positions = this.playersPos;
+  var endPositions = this.players;
+  var endPositions = this.players;
+  var self = this.findPlayer(this.self);
+  for(var i = 0; i < positions.length; i++) {
+    var currentPos =  this.playersPos[i];
+    if(currentPos.id === self.id) continue;
+    var endPos = this.findPlayer(currentPos.id);
+
+    if(typeof currentPos.total === "undefined") {
+      var xDif =  ( endPos.x -  currentPos.x) / 100;
+      var yDif = (endPos.y - currentPos.y) / 100;
+      currentPos.total = {
+        x: xDif,
+        y: yDif,
+      };
+      console.log('current: '+ currentPos.x);
+      console.log('current + End: '+(currentPos.x + currentPos.total.x * 100));
+      console.log('End: '+endPos.x);
+    }
+    var travelX = currentPos.total.x * dt;
+    var travelY =  currentPos.total.y * dt;
+    currentPos.x += travelX;
+    currentPos.y += travelY;
+  }
+}
 GameMaster.prototype.truncateMessage = function(str) {
   var count = 0;
   for (var i = 0; i < str.length; i++) {
@@ -210,6 +251,7 @@ GameMaster.prototype.updateLoop = function() {
 
 GameMaster.prototype.processPhysics = function(dt) {
   this.processPlayerSelfPhysics(dt);
+  this.interpolate(dt);
   this.reDraw();
 }
 GameMaster.prototype.processPlayerSelfPhysics = function(dt) {
