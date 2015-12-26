@@ -27,7 +27,7 @@
 
 	</head>
 
-	<body>
+	<body id="body">
 		<div id="gameDiv"><canvas id="gameCan" width="400" height="450" style="background: #000;"></canvas></div>
 		<script type="text/javascript">
 		gameMaster = new GameMaster();
@@ -40,6 +40,14 @@
 		window.onkeyup = function(e) {
 			gameMaster.keyUp(e);
 		};
+		document.getElementById('body').addEventListener('mousedown', function(event) {
+			event.preventDefault();
+			gameMaster.mouseDown(event);
+		});
+		document.getElementById('body').addEventListener('mouseup', function(event) {
+			event.preventDefault();
+			gameMaster.mouseUp(event);
+		});
 		gameMaster.updateLoop();
 		console.log(gameMaster);
 		</script>

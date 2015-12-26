@@ -3,8 +3,13 @@ var UUID        = require('node-uuid');
 var verbose     = true;
 
 require('./game-master.js');
+gameServer.board = {
+  width: 600,
+  height: 600
+};
 gameServer.inputs = [];
 gameServer.players = [];
+gameServer.bullets = [];
 gameServer.clientState = {};
 gameServer.clientState.players = [];
 // gameServer.playerAtts = {
@@ -49,16 +54,7 @@ gameServer.findGame = function(player) {
 gameServer.time;
 gameServer.update  = function() {
   setTimeout(this.update.bind(this), 100);
-  // if(this.inputs.length > 0) {
-  //   for(var i = 0; i < this.inputs.length; i ++) {
-  //     input = this.inputs[i];
-  //   //  console.log('id: '+input.id+', key: '+input.key+', timestamp: '+input.timestamp);
-  //     this.processPhysics(input.id, input.key, input.condition, input.timestamp);
-  //   }
-  //   this.inputs = [];
-  // }
   this.updatedPlayers();
-//  console.log('update');
 };
 
 gameServer.processMessage = function(data) {
@@ -71,12 +67,73 @@ gameServer.processMessage = function(data) {
       switch(type) {
         case 'i':
           this.processInput(commands[2], commands[3], commands[4], commands[5]);
-          break;
+        break;
+        case 'm':
+            this.processMouseInput(commands[2], commands[3], commands[4], commands[5], commands[6], commands[7]);
+        break;
       }
       break;
   }
 };
+gameServer.processMouseInput = function(id, mouse, condition, x, y, timestamp){
+  var bullet = this.findBullet(id);
+  if(bullet && bullet.condition === 1){
+    bullet.x = parseFloat(x);
+    bullet.y = parseFloat(y);
+    bullet.condition = 0;
+    bullet.timestamp = timestamp - bullet.timestamp;
+  }else {
+    //console.log(parseFloat(y) );
+    //console.log(parseFloat(x) );
+    this.bullets.push({id: id, mouse: mouse, condition: parseInt(condition), x:parseFloat(x), y:parseFloat(y), timestamp: timestamp});
+  }
+}
+gameServer.processBullets = function() {
+  var bullets =  this.bullets;
+  for (var i = 0; i < bullets.length; i++) {
+    var bullet = bullets[i];
+    if(bullet.condition === 0) {
+      console.log('bullet fired');
+      bullet.condition = 'fired';
+      var player = this.findPlayer(bullet.id);
+      var x = bullet.x - (player.clientState.x);
+      var y = bullet.y - (player.clientState.y);
+      bullet.x =  player.clientState.x;
+      bullet.y =  player.clientState.y;
+      bullet.angle = Math.atan2(y, x);
+
+      bullet.vx = Math.cos(bullet.angle) * 20;
+     //console.log(bullet.vx );
+      bullet.vy = Math.sin(bullet.angle) * 20;
+     //console.log(bullet.vy );
+    }else if(bullet.condition === 'fired') {
+
+      bullet.x += bullet.vx;
+      bullet.y += bullet.vy;
+      console.log('x: '+bullet.y );
+      console.log('y: '+bullet.y );
+      if(bullet.x < 0 || bullet.x > this.board.width) {
+        bullets.splice(i, 1);
+      }
+      if(bullet.y < 0 || bullet.y > this.board.height) {
+        bullets.splice(i, 1);
+      }
+    }
+  }
+}
+gameServer.findBullet = function(id) {
+  var bullets =  this.bullets;
+  for (var i = 0; i < bullets.length; i++) {
+    var bullet = bullets[i];
+    if(bullet.id === id) {
+      return bullet;
+    }
+  }
+  return false;
+}
+
 gameServer.processInput = function(id, key, condition, timestamp){
+  console.log(key);
   var player = this.findPlayer(id);
   con = parseInt(condition);
   if(con === 1 && this.checkKey(player, key)) {
@@ -156,12 +213,28 @@ gameServer.playerJoin =  function(player){
 // }
 gameServer.updatedPlayers = function() {
   this.processInputs();
+  this.processBullets();
   var players =  this.players;
+  var output = {
+    players: this.getClientPlayers(),
+    bullets: this.getFiredBullets()
+  }
   for (var i = 0; i < players.length; i++) {
     var player = players[i];
   //  console.log('sending');
-      player.send('s.pu.'+JSON.stringify(this.getClientPlayers()));
+      player.send('s.pu.'+JSON.stringify(output));
   }
+}
+gameServer.getFiredBullets = function() {
+  var bullets = this.bullets;
+  var returnVal = [];
+  for (var i = 0; i < bullets.length; i++){
+    var bullet = bullets[i];
+    if (bullet.condition === 'fired') {
+      returnVal.push(bullet);
+    }
+  }
+  return returnVal;
 }
 
 gameServer.processPhysics = function(userid, key) {
