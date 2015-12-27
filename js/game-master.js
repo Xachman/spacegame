@@ -64,7 +64,15 @@ GameMaster.prototype.reDraw = function() {
       //console.log(player.x);
     }
   //  console.log(player.x+', '+player.y);
-    this.ctx.fillRect(player.x, player.y,50,50);
+    this.ctx.fillRect(player.x, player.y,player.width,player.height);
+    this.ctx.beginPath();
+    this.ctx.moveTo(player.x,player.y);
+    this.ctx.lineTo(player.x + player.width, player.y);
+    this.ctx.lineTo(player.x + player.width, player.y + player.height);
+    this.ctx.lineTo(player.x, player.y + player.height);
+    this.ctx.lineTo(player.x, player.y);
+    this.ctx.strokeStyle="#7CFC00";
+    this.ctx.stroke();
   }
   this.drawBullets();
 
@@ -73,7 +81,15 @@ GameMaster.prototype.drawBullets = function() {
   var bullets =  this.bullets;
   for (var i = 0; i < bullets.length; i++) {
     var bullet = bullets[i];
-    this.ctx.fillRect(bullet.x, bullet.y,5,5);
+    this.ctx.fillRect(bullet.x, bullet.y,bullet.width,bullet.height);
+    this.ctx.beginPath();
+    this.ctx.moveTo(bullet.x,bullet.y);
+    this.ctx.lineTo(bullet.x + bullet.width, bullet.y);
+    this.ctx.lineTo(bullet.x + bullet.width, bullet.y + bullet.height);
+    this.ctx.lineTo(bullet.x, bullet.y + bullet.height);
+    this.ctx.lineTo(bullet.x, bullet.y);
+    this.ctx.strokeStyle="#7CFC00";
+    this.ctx.stroke();
   }
 }
 GameMaster.prototype.updatePlayers = function(data) {
@@ -91,8 +107,10 @@ GameMaster.prototype.updatePlayers = function(data) {
 
   if(this.players.length > 0) {
     var self = this.findPlayer(this.self);
-    x = self.x;
-    y = self.y;
+    if(self) {
+      x = self.x;
+      y = self.y;
+    }
   }
   console.log(this.packages[0]);
   this.playersPos = this.packages[0].players;
@@ -155,13 +173,10 @@ GameMaster.prototype.clientOnNetMessage = function(data) {
 }; //cli
 GameMaster.prototype.interpolate = function(dt) {
   var positions = this.playersPos;
- // console.log(positions);
-  var endPositions = this.players;
-  var endPositions = this.players;
   var self = this.findPlayer(this.self);
   for(var i = 0; i < positions.length; i++) {
     var currentPos =  this.playersPos[i];
-    if(currentPos.id === self.id) continue;
+    if(self && currentPos.id === self.id) continue;
     var endPos = this.findPlayer(currentPos.id);
 
     if(typeof currentPos.total === "undefined") {
@@ -171,9 +186,9 @@ GameMaster.prototype.interpolate = function(dt) {
         x: xDif,
         y: yDif,
       };
-      console.log('current: '+ currentPos.x);
-      console.log('current + End: '+(currentPos.x + currentPos.total.x * 100));
-      console.log('End: '+endPos.x);
+      //console.log('current: '+ currentPos.x);
+      //console.log('current + End: '+(currentPos.x + currentPos.total.x * 100));
+      //console.log('End: '+endPos.x);
     }
     var travelX = currentPos.total.x * dt;
     var travelY =  currentPos.total.y * dt;
@@ -352,6 +367,7 @@ GameMaster.prototype.findPlayer = function(id) {
       return player;
     }
   }
+  return false;
 }
 GameMaster.prototype.mouseDown = function(event) {
   this.sendMouseToServer('mousedown', 1, event.x, event.y);

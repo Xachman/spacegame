@@ -85,15 +85,15 @@ gameServer.processMouseInput = function(id, mouse, condition, x, y, timestamp){
   }else {
     //console.log(parseFloat(y) );
     //console.log(parseFloat(x) );
-    this.bullets.push({id: id, mouse: mouse, condition: parseInt(condition), x:parseFloat(x), y:parseFloat(y), timestamp: timestamp});
+    this.bullets.push({id: id, mouse: mouse, condition: parseInt(condition), x:parseFloat(x), y:parseFloat(y), timestamp: timestamp, width: 10, height: 10});
   }
 }
 gameServer.processBullets = function() {
   var bullets =  this.bullets;
-  for (var i = 0; i < bullets.length; i++) {
+  for (var i = 0; i < bullets.length;  i++) {
     var bullet = bullets[i];
     if(bullet.condition === 0) {
-      console.log('bullet fired');
+      //console.log('bullet fired');
       bullet.condition = 'fired';
       var player = this.findPlayer(bullet.id);
       var x = bullet.x - (player.clientState.x);
@@ -106,19 +106,70 @@ gameServer.processBullets = function() {
      //console.log(bullet.vx );
       bullet.vy = Math.sin(bullet.angle) * 20;
      //console.log(bullet.vy );
+      this.moveBullet(bullet, i, bullets);
+      this.checkBulletCollision(bullet, i);
     }else if(bullet.condition === 'fired') {
-
-      bullet.x += bullet.vx;
-      bullet.y += bullet.vy;
-      console.log('x: '+bullet.y );
-      console.log('y: '+bullet.y );
-      if(bullet.x < 0 || bullet.x > this.board.width) {
-        bullets.splice(i, 1);
-      }
-      if(bullet.y < 0 || bullet.y > this.board.height) {
-        bullets.splice(i, 1);
-      }
+      this.moveBullet(bullet, i, bullets);
+      this.checkBulletCollision(bullet, i);
     }
+  }
+}
+gameServer.checkBulletCollision = function(bullet, index) {
+  var players = this.players;
+  for(var i = 0; i < players.length; i++) {
+    var player =  players[i];
+    if(player.userid !== bullet.id && player.atts.alive.condition === true) {
+      //console.log('collision check')
+      playerPos = player.clientState;
+      //var bulletLastx2 = bullet.lastX + bullet.width;
+      //var bulletLasty2 = bullet.lastY + bullet.height;
+      var bulletx2 = bullet.x + bullet.width;
+      var bullety2 = bullet.y + bullet.height;
+      var playerx2 = playerPos.x + player.atts.width;
+      var playery2 = playerPos.y + player.atts.height;
+      //console.log(playerx2);
+      //console.log(playerPos.x);
+
+      if(playerPos.y < bullet.y && playery2 < bullety2){
+       // console.log('player above');
+        return;
+      }
+      if(playerPos.x < bullet.x && playerx2 < bulletx2){
+      //  console.log('player left');
+        return;
+      }
+
+      if(playerPos.x > bullet.x && playerx2 > bulletx2){
+       // console.log('player right');
+        return;
+      }
+
+      if(playerPos.y > bullet.y && playery2 > bullety2){
+      //  console.log('player below');
+        return;
+      }
+
+      this.processHit(player.userid, index);
+     // if(bullet.x + 10 <= playerPos.x + 50 && bullet.x + 10 <= playerPos.x + 50)
+    }
+  }
+}
+gameServer.processHit = function(id, index) {
+  var player = this.findPlayer(id);
+  player.atts.alive.condition = false;
+  player.atts.alive.time = Date.now();
+  this.bullets.splice(index, 1);
+}
+gameServer.moveBullet = function(bullet, index, bullets) {
+  bullet.lastX = bullet.x;
+  bullet.lastY = bullet.y;
+  bullet.x += bullet.vx;
+  bullet.y += bullet.vy;
+  if(bullet.x < 0 || bullet.x > this.board.width) {
+    bullets.splice(index, 1);
+  }
+  if(bullet.y < 0 || bullet.y > this.board.height) {
+    bullets.splice(index, 1);
   }
 }
 gameServer.findBullet = function(id) {
@@ -133,7 +184,7 @@ gameServer.findBullet = function(id) {
 }
 
 gameServer.processInput = function(id, key, condition, timestamp){
-  console.log(key);
+ // console.log(key);
   var player = this.findPlayer(id);
   con = parseInt(condition);
   if(con === 1 && this.checkKey(player, key)) {
@@ -196,9 +247,14 @@ gameServer.playerJoin =  function(player){
   player.clientState.y = Math.floor((Math.random() * 350) + 1);
   player.clientState.id = player.userid;
   player.atts = {
+    width: 50,
+    height: 50,
     speed: 50,
-    inputs: []
+    inputs: [],
+    alive: {condition: true, time: 0}
   }
+  player.clientState.width = player.atts.width;
+  player.clientState.height = player.atts.height;
 //  console.log(player);
 //  var clientPlayer = {x: player.x, y: player.y, id:player.userid};
     this.players.push(player);
@@ -212,6 +268,7 @@ gameServer.playerJoin =  function(player){
 //   this.updatedPlayers();
 // }
 gameServer.updatedPlayers = function() {
+  this.checkPlayerAlive();
   this.processInputs();
   this.processBullets();
   var players =  this.players;
@@ -297,9 +354,24 @@ gameServer.getClientPlayers = function() {
   var returnVal = [];
   var players =  this.players;
   for(var i = 0; i < players.length; i ++) {
-    returnVal.push(players[i].clientState);
+    var player = players[i];
+    if(player.atts.alive.condition === true) {
+      returnVal.push(players[i].clientState);
+    }
   }
   return returnVal;
+}
+gameServer.checkPlayerAlive = function() {
+  var players =  this.players;
+  for(var i = 0; i < players.length; i ++) {
+    var player = players[i];
+   // console.log((Date.now() - player.atts.alive.time));
+    if(player.atts.alive.condition === false && Date.now() - player.atts.alive.time >= 3000) {
+      player.atts.alive.condition = true;
+      player.clientState.x = Math.floor((Math.random() * 350) + 1);
+      player.clientState.y = Math.floor((Math.random() * 350) + 1);
+    }
+  }
 }
 gameServer.removePlayerById = function(id) {
   var players =  this.players;
