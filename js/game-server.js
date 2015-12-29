@@ -4,14 +4,15 @@ var verbose     = true;
 
 require('./game-master.js');
 gameServer.board = {
-  width: 600,
-  height: 600
+  width: 1300,
+  height: 768
 };
 gameServer.inputs = [];
 gameServer.players = [];
 gameServer.bullets = [];
 gameServer.clientState = {};
 gameServer.clientState.players = [];
+gameServer.pingPlayersTime = 0;
 // gameServer.playerAtts = {
 //   speed: 50,
 //   inputs: []
@@ -71,11 +72,21 @@ gameServer.processMessage = function(data) {
         case 'm':
             this.processMouseInput(commands[2], commands[3], commands[4], commands[5], commands[6], commands[7]);
         break;
+        case 'l':
+            this.processLatency(commands[2]);
+        break;
       }
       break;
   }
 };
+gameServer.processLatency = function(id) {
+  var player = this.findPlayer(id);
+  player.clientState.ping = Date.now() - this.pingPlayersTime;
+}
 gameServer.processMouseInput = function(id, mouse, condition, x, y, timestamp){
+  var player = this.findPlayer(id);
+  //console.log(player.atts.alive);
+  if(!player.atts.alive.condition) return;
   var bullet = this.findBullet(id);
   if(bullet && bullet.condition === 1){
     bullet.x = parseFloat(x);
@@ -251,10 +262,12 @@ gameServer.playerJoin =  function(player){
     height: 50,
     speed: 50,
     inputs: [],
+    color: '#'+Math.floor(Math.random()*16777215).toString(16),
     alive: {condition: true, time: 0}
   }
   player.clientState.width = player.atts.width;
   player.clientState.height = player.atts.height;
+  player.clientState.atts = player.atts;
 //  console.log(player);
 //  var clientPlayer = {x: player.x, y: player.y, id:player.userid};
     this.players.push(player);
@@ -274,13 +287,21 @@ gameServer.updatedPlayers = function() {
   var players =  this.players;
   var output = {
     players: this.getClientPlayers(),
-    bullets: this.getFiredBullets()
+    bullets: this.getFiredBullets(),
+    board: this.board,
+    ping: 0
+  }
+  if(Date.now() - this.pingPlayersTime > 2000 && this.players.length > 0) {
+    //console.log('ping players');
+    this.pingPlayersTime = Date.now();
+    output.ping = 1;
   }
   for (var i = 0; i < players.length; i++) {
     var player = players[i];
   //  console.log('sending');
       player.send('s.pu.'+JSON.stringify(output));
   }
+
 }
 gameServer.getFiredBullets = function() {
   var bullets = this.bullets;
@@ -312,23 +333,26 @@ gameServer.processPhysics = function(userid, key) {
   //  console.log('processing phys: '+key);
     switch(parseInt(key)) {
       case upArrow:
-      //  console.log('processning up arrow');
+        //console.log('up arrow');
         var calc = (player.y - (speed * (dif / 1000)))
         player.y = calc;
       //  console.log(calc);
       //  this.updatePosition(player.x, calc, player.userid);
         break;
       case leftArrow:
+       // console.log('left arrow');
         var calc = (player.x - (speed * (dif / 1000)))
         player.x = calc;
       //  this.updatePosition(calc, player.y, player.userid);
         break;
       case rightArrow:
+      //  console.log('right arrow');
         var calc = (player.x + (speed * (dif / 1000)))
         player.x = calc;
       //  this.updatePosition(calc, player.y , player.userid);
         break;
       case downArrow:
+       // console.log('down arrow');
         var calc = (player.y + (speed * (dif / 1000)))
         player.y = calc;
         //this.updatePosition(player.x, calc , player.userid);

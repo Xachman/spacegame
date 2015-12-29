@@ -64,7 +64,12 @@ GameMaster.prototype.reDraw = function() {
       //console.log(player.x);
     }
   //  console.log(player.x+', '+player.y);
+    if(typeof player.atts !== 'undefined') var color = player.atts.color;
+    else var color = '#fff';
+    //console.log(player.atts.color);
+    this.ctx.fillStyle = color;
     this.ctx.fillRect(player.x, player.y,player.width,player.height);
+
     this.ctx.beginPath();
     this.ctx.moveTo(player.x,player.y);
     this.ctx.lineTo(player.x + player.width, player.y);
@@ -81,6 +86,10 @@ GameMaster.prototype.drawBullets = function() {
   var bullets =  this.bullets;
   for (var i = 0; i < bullets.length; i++) {
     var bullet = bullets[i];
+    var player =  this.findPlayer(bullet.id);
+    if(typeof player.atts !== 'undefined') var color = player.atts.color
+    else var color = '#fff';
+    this.ctx.fillStyle = color;
     this.ctx.fillRect(bullet.x, bullet.y,bullet.width,bullet.height);
     this.ctx.beginPath();
     this.ctx.moveTo(bullet.x,bullet.y);
@@ -102,9 +111,16 @@ GameMaster.prototype.updatePlayers = function(data) {
     this.packages.shift();
   }
   //console.log(players);
+  if(data.ping === 1) {
+    this.pingServer();
+  }
   var x = 0;
   var y = 0;
-
+  if(this.canvas.width !== data.board.width || this.canvas.height !== data.board.height){
+    console.log('board changed');
+    this.canvas.width = data.board.width;
+    this.canvas.height = data.board.height;
+  }
   if(this.players.length > 0) {
     var self = this.findPlayer(this.self);
     if(self) {
@@ -112,7 +128,7 @@ GameMaster.prototype.updatePlayers = function(data) {
       y = self.y;
     }
   }
-  console.log(this.packages[0]);
+  //console.log(this.packages[0]);
   this.playersPos = this.packages[0].players;
 
   this.players = players;
@@ -126,6 +142,7 @@ GameMaster.prototype.updatePlayers = function(data) {
     servSelf.x = x;
     servSelf.y = y;
   }
+  this.pingServer();
   //this.reDraw();
 }
 GameMaster.prototype.clientOnNetMessage = function(data) {
@@ -239,12 +256,6 @@ GameMaster.prototype.clientOnHostGame = function(data) {
   this.players.self.state = 'hosting.waiting for a player';
   this.players.self.info_color = '#cc0000';
 };
-GameMaster.prototype.client_onping = function(data) {
-
-    // this.net_ping = new Date().getTime() - parseFloat( data );
-    // this.net_latency = this.net_ping/2;
-
-};
 
 
 GameMaster.prototype.keyPress = function(e) {
@@ -268,7 +279,6 @@ if( 'undefined' != typeof global ) {
 }
 
 GameMaster.prototype.updateLoop = function() {
-  var game = this;
   requestAnimationFrame(this.updateLoop.bind(this));
   var now = new Date().getTime();
   dt = now - (this.time || now);
@@ -374,4 +384,8 @@ GameMaster.prototype.mouseDown = function(event) {
 }
 GameMaster.prototype.mouseUp = function(event) {
   this.sendMouseToServer('mousedown', 0, event.x, event.y);
+}
+GameMaster.prototype.pingServer = function() {
+  var player = this.self;
+  this.socket.send('c.l.'+player);
 }
