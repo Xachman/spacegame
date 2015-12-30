@@ -84,6 +84,7 @@ gameServer.processLatency = function(id) {
   player.clientState.ping = Date.now() - this.pingPlayersTime;
 }
 gameServer.processMouseInput = function(id, mouse, condition, x, y, timestamp){
+    console.log(x);
   var player = this.findPlayer(id);
   //console.log(player.atts.alive);
   if(!player.atts.alive.condition) return;
@@ -127,8 +128,11 @@ gameServer.processBullets = function() {
 }
 gameServer.checkBulletCollision = function(bullet, index) {
   var players = this.players;
+  var count = 0;
   for(var i = 0; i < players.length; i++) {
     var player =  players[i];
+    count++;
+   // console.log(player.userid !== bullet.id);
     if(player.userid !== bullet.id && player.atts.alive.condition === true) {
       //console.log('collision check')
       playerPos = player.clientState;
@@ -143,27 +147,28 @@ gameServer.checkBulletCollision = function(bullet, index) {
 
       if(playerPos.y < bullet.y && playery2 < bullety2){
        // console.log('player above');
-        return;
+        continue;
       }
       if(playerPos.x < bullet.x && playerx2 < bulletx2){
       //  console.log('player left');
-        return;
+        continue;
       }
 
       if(playerPos.x > bullet.x && playerx2 > bulletx2){
        // console.log('player right');
-        return;
+        continue;
       }
 
       if(playerPos.y > bullet.y && playery2 > bullety2){
       //  console.log('player below');
-        return;
+        continue;
       }
 
       this.processHit(player.userid, index);
      // if(bullet.x + 10 <= playerPos.x + 50 && bullet.x + 10 <= playerPos.x + 50)
     }
   }
+  console.log(count);
 }
 gameServer.processHit = function(id, index) {
   var player = this.findPlayer(id);

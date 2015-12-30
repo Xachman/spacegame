@@ -380,10 +380,11 @@ GameMaster.prototype.findPlayer = function(id) {
   return false;
 }
 GameMaster.prototype.mouseDown = function(event) {
-  this.sendMouseToServer('mousedown', 1, event.x, event.y);
+    console.log(event);
+  this.sendMouseToServer('mousedown', 1, event.clientX, event.clientY);
 }
 GameMaster.prototype.mouseUp = function(event) {
-  this.sendMouseToServer('mousedown', 0, event.x, event.y);
+  this.sendMouseToServer('mousedown', 0, event.clientX, event.clientY);
 }
 GameMaster.prototype.pingServer = function() {
   var player = this.self;
