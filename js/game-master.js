@@ -136,12 +136,12 @@ GameMaster.prototype.updatePlayers = function(data) {
 
   var servSelf = this.findPlayer(this.self);
 
-  condition = x <= servSelf.x + 10  && x >= servSelf.x - 10 && y <= servSelf.y + 10 && y >= servSelf.y - 10;
+  //condition = x <= servSelf.x + 10  && x >= servSelf.x - 10 && y <= servSelf.y + 10 && y >= servSelf.y - 10;
 
-  if(condition ) {
-    servSelf.x = x;
-    servSelf.y = y;
-  }
+//  if(condition ) {
+//    servSelf.x = x;
+//    servSelf.y = y;
+//  }
   this.pingServer();
   //this.reDraw();
 }

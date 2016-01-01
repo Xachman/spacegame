@@ -84,12 +84,12 @@ gameServer.processLatency = function(id) {
   player.clientState.ping = Date.now() - this.pingPlayersTime;
 }
 gameServer.processMouseInput = function(id, mouse, condition, x, y, timestamp){
-    console.log(x);
+   // console.log(x);
   var player = this.findPlayer(id);
   //console.log(player.atts.alive);
   if(!player.atts.alive.condition) return;
   var bullet = this.findBullet(id);
-  if(bullet && bullet.condition === 1){
+  if(bullet){
     bullet.x = parseFloat(x);
     bullet.y = parseFloat(y);
     bullet.condition = 0;
@@ -97,6 +97,7 @@ gameServer.processMouseInput = function(id, mouse, condition, x, y, timestamp){
   }else {
     //console.log(parseFloat(y) );
     //console.log(parseFloat(x) );
+    //console.log(timestamp);
     this.bullets.push({id: id, mouse: mouse, condition: parseInt(condition), x:parseFloat(x), y:parseFloat(y), timestamp: timestamp, width: 10, height: 10});
   }
 }
@@ -113,10 +114,19 @@ gameServer.processBullets = function() {
       bullet.x =  player.clientState.x;
       bullet.y =  player.clientState.y;
       bullet.angle = Math.atan2(y, x);
-
-      bullet.vx = Math.cos(bullet.angle) * 20;
+      
+      var holdTime = bullet.timestamp;
+      console.log(holdTime);
+      if(holdTime > 4000) {
+          holdTime = 4000;
+      }else if(holdTime < 1000) {
+          holdTime = 1000;
+      }
+      holdTime = holdTime / 1000;
+      var speed = 20 * holdTime;
+      bullet.vx = Math.cos(bullet.angle) * speed;
      //console.log(bullet.vx );
-      bullet.vy = Math.sin(bullet.angle) * 20;
+      bullet.vy = Math.sin(bullet.angle) * speed;
      //console.log(bullet.vy );
       this.moveBullet(bullet, i, bullets);
       this.checkBulletCollision(bullet, i);
@@ -125,7 +135,7 @@ gameServer.processBullets = function() {
       this.checkBulletCollision(bullet, i);
     }
   }
-}
+};
 gameServer.checkBulletCollision = function(bullet, index) {
   var players = this.players;
   var count = 0;
@@ -145,30 +155,15 @@ gameServer.checkBulletCollision = function(bullet, index) {
       //console.log(playerx2);
       //console.log(playerPos.x);
 
-      if(playerPos.y < bullet.y && playery2 < bullety2){
-       // console.log('player above');
-        continue;
-      }
-      if(playerPos.x < bullet.x && playerx2 < bulletx2){
-      //  console.log('player left');
-        continue;
+      if(playerPos.y <  bullety2 && playerPos.x < bulletx2 && playerx2 > bullet.x && playery2 > bullet.y ){
+        this.processHit(player.userid, index);
       }
 
-      if(playerPos.x > bullet.x && playerx2 > bulletx2){
-       // console.log('player right');
-        continue;
-      }
-
-      if(playerPos.y > bullet.y && playery2 > bullety2){
-      //  console.log('player below');
-        continue;
-      }
-
-      this.processHit(player.userid, index);
+      
      // if(bullet.x + 10 <= playerPos.x + 50 && bullet.x + 10 <= playerPos.x + 50)
     }
   }
-  console.log(count);
+  //console.log(count);
 }
 gameServer.processHit = function(id, index) {
   var player = this.findPlayer(id);
@@ -192,7 +187,7 @@ gameServer.findBullet = function(id) {
   var bullets =  this.bullets;
   for (var i = 0; i < bullets.length; i++) {
     var bullet = bullets[i];
-    if(bullet.id === id) {
+    if(bullet.id === id  && bullet.condition === 1) {
       return bullet;
     }
   }
@@ -202,16 +197,31 @@ gameServer.findBullet = function(id) {
 gameServer.processInput = function(id, key, condition, timestamp){
  // console.log(key);
   var player = this.findPlayer(id);
-  con = parseInt(condition);
+  var con = parseInt(condition);
   if(con === 1 && this.checkKey(player, key)) {
 //  console.log(player.userid);
-  player.atts.inputs.push({key: key, timestamp: timestamp});
+  player.atts.inputs.push({key: key, timestamp: timestamp, condition: con});
   //    console.log(player.atts.inputs);
   }else if(con === 0){
   //  this.processPhysics(id, key);
-    this.clearInput(player, key);
+    //this.clearInput(player, key);
+    var input  = this.findPlayerInput(player, key, 1);
+    //console.log(input);
+    input.condition = con;
+    input.endTime =  timestamp;
   }
 };
+gameServer.findPlayerInput =  function(player, key, condition) {
+    var inputs = player.atts.inputs;
+    //console.log(inputs);
+    for (var i = 0; i < inputs.length; i++) {
+        var input = inputs[i]; 
+        if(input.key === key && input.condition === condition) {
+            return input;
+        }
+    }
+    return false;
+}
 gameServer.processInputs = function() {
   var players = this.players;
   for(var i = 0; i < players.length; i++) {
@@ -257,6 +267,22 @@ gameServer.clearInput = function(player, key) {
     }
   }
 }
+gameServer.clearPlayerInputs = function() {
+    var players =  this.players;
+    for(var i = 0; i < players.length; i++){
+        this.clearInputs(players[i]);
+    }
+}
+gameServer.clearInputs = function(player) {
+    var inputs =  player.atts.inputs;
+   // console.log(inputs);
+    for(var i = 0; i < inputs.length; i++){
+        var input = inputs[i];
+        if(input.condition === 0) {
+            inputs.splice(i,1);
+        }
+    }
+}
 gameServer.playerJoin =  function(player){
   player.clientState = {};
   player.clientState.x = Math.floor((Math.random() * 350) + 1);
@@ -288,6 +314,7 @@ gameServer.playerJoin =  function(player){
 gameServer.updatedPlayers = function() {
   this.checkPlayerAlive();
   this.processInputs();
+  this.clearPlayerInputs();
   this.processBullets();
   var players =  this.players;
   var output = {
@@ -329,11 +356,17 @@ gameServer.processPhysics = function(userid, key) {
   var spaceBar = 32;
   var player = this.findPlayer(userid);
   var input = this.findInput(userid, key);
-  var dif =  Date.now() - input.timestamp;
+  if(input.condition === 1){
+    var dif =  Date.now() - input.timestamp;
+    input.timestamp = Date.now();
+  }else{
+    var dif = input.endTime - input.timestamp;
+  }
+ 
 //  console.log(dif);
   var speed = player.atts.speed;
   //console.log(player.userid);
-  input.timestamp = Date.now();
+  
   player = player.clientState;
   //  console.log('processing phys: '+key);
     switch(parseInt(key)) {
