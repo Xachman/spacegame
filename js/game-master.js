@@ -14,7 +14,7 @@ function GameMaster(instance) {
       upArrow: {condition: false, key: 38},
       downArrow: {condition: false, key: 40},
       leftArrow: {condition: false, key: 37},
-      rightArrow: {condition: false, key: 39}
+      rightArrow: {condition: false, key: 39},
     }
   }
   this.bullets = [];
@@ -90,6 +90,7 @@ GameMaster.prototype.drawBullets = function() {
     if(typeof player.atts !== 'undefined') var color = player.atts.color
     else var color = '#fff';
     this.ctx.fillStyle = color;
+    this.moveBullet(bullet);
     this.ctx.fillRect(bullet.x, bullet.y,bullet.width,bullet.height);
     this.ctx.beginPath();
     this.ctx.moveTo(bullet.x,bullet.y);
@@ -100,6 +101,14 @@ GameMaster.prototype.drawBullets = function() {
     this.ctx.strokeStyle="#7CFC00";
     this.ctx.stroke();
   }
+}
+GameMaster.prototype.moveBullet = function(bullet) {
+  var dt = this.dt;
+  var totalVX = (bullet.vx * 10) / 1000;
+  var totalVY = (bullet.vy * 10) / 1000;
+  //console.log(dt);
+  bullet.x += totalVX * dt;
+  bullet.y += totalVY * dt;
 }
 GameMaster.prototype.updatePlayers = function(data) {
 
@@ -275,14 +284,14 @@ GameMaster.prototype.sendMouseToServer = function(key, condition, x, y) {
   this.socket.send('c.m.'+this.self+'.'+key+'.'+condition+'.'+x+'.'+y);
 }
 if( 'undefined' != typeof global ) {
-    module.exports = global.GameMaster = GameMaster;
+   // module.exports = global.GameMaster = GameMaster;
 }
 
 GameMaster.prototype.updateLoop = function() {
   requestAnimationFrame(this.updateLoop.bind(this));
   var now = new Date().getTime();
-  dt = now - (this.time || now);
-
+  var dt = now - (this.time || now);
+  this.dt = dt;
   this.time = now;
 
   this.processPhysics(dt);
@@ -315,20 +324,27 @@ GameMaster.prototype.processPlayerPhysics = function(input, dt) {
   var leftArrow = 37;
   var rightArrow = 39;
   var downArrow = 40;
-  var spaceBar = 32;
+  var wkey = 87;
+  var akey =65;
+  var dkey = 68;
+  var skey = 83;
   var speed = 50 / 1000
   switch(input.key) {
-    case upArrow:
+    case upArrow: 
+    case wkey:
       //console.log((player.y));
       player.y = player.y - (speed * dt);
     break;
-    case leftArrow:
+    case leftArrow: 
+    case akey:
       player.x = player.x - (speed * dt);
     break;
     case rightArrow:
+    case dkey:
       player.x = player.x + (speed * dt);
     break;
     case downArrow:
+    case skey:
       player.y = player.y + (speed * dt);
     break;
     case spaceBar:
@@ -341,19 +357,27 @@ GameMaster.prototype.processPlayerInput = function(key, condition) {
   var leftArrow = 37;
   var rightArrow = 39;
   var downArrow = 40;
+  var wkey = 87;
+  var akey =65;
+  var dkey = 68;
+  var skey = 83;
   var spaceBar = 32;
-
+  console.log(key);
   switch(key) {
     case upArrow:
+    case wkey:
       this.updateKeyCondition(this.player.inputs.upArrow, condition);
     break;
     case leftArrow:
+    case akey:
       this.updateKeyCondition(this.player.inputs.leftArrow, condition);
     break;
     case rightArrow:
+    case dkey:
       this.updateKeyCondition(this.player.inputs.rightArrow, condition);
     break;
     case downArrow:
+    case skey:
       this.updateKeyCondition(this.player.inputs.downArrow, condition);
     break;
     case spaceBar:

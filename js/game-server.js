@@ -102,9 +102,9 @@ gameServer.processMouseInput = function(id, mouse, condition, x, y, timestamp){
   }
 }
 gameServer.processBullets = function() {
-  var bullets =  this.bullets;
-  for (var i = 0; i < bullets.length;  i++) {
-    var bullet = bullets[i];
+  var theBullets =  this.bullets;
+  for (var i = 0; i < theBullets.length;  i++) {
+    var bullet = theBullets[i];
     if(bullet.condition === 0) {
       //console.log('bullet fired');
       bullet.condition = 'fired';
@@ -116,22 +116,23 @@ gameServer.processBullets = function() {
       bullet.angle = Math.atan2(y, x);
       
       var holdTime = bullet.timestamp;
-      console.log(holdTime);
+      //console.log(holdTime);
       if(holdTime > 4000) {
           holdTime = 4000;
       }else if(holdTime < 1000) {
           holdTime = 1000;
       }
       holdTime = holdTime / 1000;
-      var speed = 20 * holdTime;
-      bullet.vx = Math.cos(bullet.angle) * speed;
+      bullet.baseSpeed = 20;
+      bullet.speed = bullet.baseSpeed * holdTime;
+      bullet.vx = Math.cos(bullet.angle) * bullet.speed;
      //console.log(bullet.vx );
-      bullet.vy = Math.sin(bullet.angle) * speed;
+      bullet.vy = Math.sin(bullet.angle) * bullet.speed;
      //console.log(bullet.vy );
-      this.moveBullet(bullet, i, bullets);
+      this.moveBullet(bullet, i, theBullets);
       this.checkBulletCollision(bullet, i);
     }else if(bullet.condition === 'fired') {
-      this.moveBullet(bullet, i, bullets);
+      this.moveBullet(bullet, i, theBullets);
       this.checkBulletCollision(bullet, i);
     }
   }
@@ -146,30 +147,37 @@ gameServer.checkBulletCollision = function(bullet, index) {
     if(player.userid !== bullet.id && player.atts.alive.condition === true) {
       //console.log('collision check')
       playerPos = player.clientState;
-      //var bulletLastx2 = bullet.lastX + bullet.width;
-      //var bulletLasty2 = bullet.lastY + bullet.height;
-      var bulletx2 = bullet.x + bullet.width;
-      var bullety2 = bullet.y + bullet.height;
-      var playerx2 = playerPos.x + player.atts.width;
-      var playery2 = playerPos.y + player.atts.height;
-      //console.log(playerx2);
-      //console.log(playerPos.x);
+      var times = Math.round(bullet.speed / bullet.baseSpeed);
+      var difx = (bullet.x - bullet.lastX) / times;
+      var dify = (bullet.y - bullet.lastY) / times;
+      //console.log(bullet.speed / bullet.baseSpeed);
+//      var bulletLastx2 = bullet.lastX + bullet.width;
+//      var bulletLasty2 = bullet.lastY + bullet.height;
+      for(var x = 0; x <= times; x++) {
+        var changeX = difx * x;
+        var changeY = dify * x;
+        var bulletx2 = bullet.lastX + bullet.width;
+        var bullety2 = bullet.lastY + bullet.height;
+        var playerx2 = playerPos.x + player.atts.width;
+        var playery2 = playerPos.y + player.atts.height;
+        //console.log(playerx2);
+        //console.log(playerPos.x);
 
-      if(playerPos.y <  bullety2 && playerPos.x < bulletx2 && playerx2 > bullet.x && playery2 > bullet.y ){
-        this.processHit(player.userid, index);
+        if(playerPos.y <  (bullety2 + changeY) && playerPos.x < (bulletx2 + changeX)&& playerx2 > (bullet.lastX + changeX) && playery2 > (bullet.lastY + changeY) ){
+          this.processHit(player.userid, bullet);
+        }
       }
-
       
      // if(bullet.x + 10 <= playerPos.x + 50 && bullet.x + 10 <= playerPos.x + 50)
     }
   }
   //console.log(count);
 }
-gameServer.processHit = function(id, index) {
+gameServer.processHit = function(id, bullet) {
   var player = this.findPlayer(id);
   player.atts.alive.condition = false;
   player.atts.alive.time = Date.now();
-  this.bullets.splice(index, 1);
+  bullet.destroy = true;
 }
 gameServer.moveBullet = function(bullet, index, bullets) {
   bullet.lastX = bullet.x;
@@ -177,12 +185,21 @@ gameServer.moveBullet = function(bullet, index, bullets) {
   bullet.x += bullet.vx;
   bullet.y += bullet.vy;
   if(bullet.x < 0 || bullet.x > this.board.width) {
-    bullets.splice(index, 1);
+    bullet.destroy = true;
   }
   if(bullet.y < 0 || bullet.y > this.board.height) {
-    bullets.splice(index, 1);
+    bullet.destroy = true;
   }
 }
+gameServer.bulletCleanup = function() {
+  var theBullets = this.bullets;
+  for(var i = 0; i < theBullets.length; i++) {
+    var bullet = theBullets[i];     
+    if(bullet.destroy) {
+      theBullets.splice(i, 1);
+    }
+  }
+} 
 gameServer.findBullet = function(id) {
   var bullets =  this.bullets;
   for (var i = 0; i < bullets.length; i++) {
@@ -195,25 +212,18 @@ gameServer.findBullet = function(id) {
 }
 
 gameServer.processInput = function(id, key, condition, timestamp){
- // console.log(key);
   var player = this.findPlayer(id);
   var con = parseInt(condition);
   if(con === 1 && this.checkKey(player, key)) {
-//  console.log(player.userid);
-  player.atts.inputs.push({key: key, timestamp: timestamp, condition: con});
-  //    console.log(player.atts.inputs);
+    player.atts.inputs.push({key: key, timestamp: timestamp, condition: con});
   }else if(con === 0){
-  //  this.processPhysics(id, key);
-    //this.clearInput(player, key);
     var input  = this.findPlayerInput(player, key, 1);
-    //console.log(input);
     input.condition = con;
     input.endTime =  timestamp;
   }
 };
 gameServer.findPlayerInput =  function(player, key, condition) {
     var inputs = player.atts.inputs;
-    //console.log(inputs);
     for (var i = 0; i < inputs.length; i++) {
         var input = inputs[i]; 
         if(input.key === key && input.condition === condition) {
@@ -227,10 +237,7 @@ gameServer.processInputs = function() {
   for(var i = 0; i < players.length; i++) {
     var player = players[i];
     var inputs = player.atts.inputs;
-  //  console.log(player.userid);
-  //  console.log(inputs);
     for(var x = 0; x < inputs.length; x++) {
-      //console.log(inputs[x]);
       this.processPhysics(player.userid, inputs[x].key);
     }
   }
@@ -243,10 +250,6 @@ gameServer.checkKey = function(player ,key) {
     }
   }
   return true;
-}
-gameServer.addInputPool = function(id, key, condition, timestamp) {
-  var inputs = this.inputs;
-  inputs.push({id: id, key: key, condition: parseInt(condition), timestamp: timestamp});
 }
 gameServer.findInput = function(id, key) {
   var player = this.findPlayer(id);
@@ -261,7 +264,6 @@ gameServer.clearInput = function(player, key) {
   var inputs = player.atts.inputs;
   for(var i = 0; i < inputs.length; i++) {
     if(inputs[i].key === key) {
-      //console.log('input cleared');
       inputs.splice(i,1);
       return;
     }
@@ -299,23 +301,15 @@ gameServer.playerJoin =  function(player){
   player.clientState.width = player.atts.width;
   player.clientState.height = player.atts.height;
   player.clientState.atts = player.atts;
-//  console.log(player);
-//  var clientPlayer = {x: player.x, y: player.y, id:player.userid};
     this.players.push(player);
-  //  this.addClientPlayer(clientPlayer);
     this.updatedPlayers();
-  //  console.log(this.players);
-
 };
-
-// gameServer.updatePosition = function(x, y, playerid) {
-//   this.updatedPlayers();
-// }
 gameServer.updatedPlayers = function() {
   this.checkPlayerAlive();
   this.processInputs();
   this.clearPlayerInputs();
   this.processBullets();
+  this.bulletCleanup();
   var players =  this.players;
   var output = {
     players: this.getClientPlayers(),
@@ -348,11 +342,14 @@ gameServer.getFiredBullets = function() {
 }
 
 gameServer.processPhysics = function(userid, key) {
-  //console.log(e.keyCode);
   var upArrow = 38;
   var leftArrow = 37;
   var rightArrow = 39;
   var downArrow = 40;
+  var wkey = 87;
+  var akey =65;
+  var dkey = 68;
+  var skey = 83;
   var spaceBar = 32;
   var player = this.findPlayer(userid);
   var input = this.findInput(userid, key);
@@ -368,28 +365,31 @@ gameServer.processPhysics = function(userid, key) {
   //console.log(player.userid);
   
   player = player.clientState;
-  //  console.log('processing phys: '+key);
+  //console.log(parseInt(key) === upArrow);
     switch(parseInt(key)) {
       case upArrow:
-        //console.log('up arrow');
+      case wkey:
         var calc = (player.y - (speed * (dif / 1000)))
         player.y = calc;
       //  console.log(calc);
       //  this.updatePosition(player.x, calc, player.userid);
         break;
       case leftArrow:
+      case akey:
        // console.log('left arrow');
         var calc = (player.x - (speed * (dif / 1000)))
         player.x = calc;
       //  this.updatePosition(calc, player.y, player.userid);
         break;
       case rightArrow:
+      case dkey:
       //  console.log('right arrow');
         var calc = (player.x + (speed * (dif / 1000)))
         player.x = calc;
       //  this.updatePosition(calc, player.y , player.userid);
         break;
       case downArrow:
+      case skey:
        // console.log('down arrow');
         var calc = (player.y + (speed * (dif / 1000)))
         player.y = calc;
