@@ -5,7 +5,7 @@ var verbose     = true;
 require('./game-master.js');
 gameServer.board = {
   width: 1300,
-  height: 768
+  height: 755
 };
 gameServer.inputs = [];
 gameServer.players = [];

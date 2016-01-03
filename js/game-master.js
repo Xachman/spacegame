@@ -54,6 +54,7 @@ GameMaster.prototype.draw = function() {
 };
 GameMaster.prototype.reDraw = function() {
   this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  this.addTiledBackground('/assets/metal_floor_tiles.jpg', 59, 118, 58, 58);
   var players = this.playersPos;
   var self = this.findPlayer(this.self);
   for(var i = 0; i < players.length; i++) {
@@ -293,12 +294,34 @@ GameMaster.prototype.updateLoop = function() {
   var dt = now - (this.time || now);
   this.dt = dt;
   this.time = now;
-
+  
   this.processPhysics(dt);
 
 
 }
-
+GameMaster.prototype.addTiledBackground = function(url, x, y, width, height) {
+  if(typeof this.backgroundImage === 'undefined'){
+    var img = new Image();
+    img.src = url;
+    this.backgroundImage = img;
+  }
+  posX = 0;
+  posY = 0;
+  count = 0;
+  while(posY < this.canvas.height){
+    while(posX < this.canvas.width) {
+      this.ctx.drawImage(this.backgroundImage, x, y, width, height, posX, posY, width, height);
+      posX += width;
+      
+      
+    }
+    posY += height;
+    posX = 0;
+   
+  }
+  
+  
+}
 GameMaster.prototype.processPhysics = function(dt) {
   this.processPlayerSelfPhysics(dt);
   this.interpolate(dt);
