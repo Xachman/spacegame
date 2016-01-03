@@ -9,6 +9,8 @@ function GameMaster(instance) {
   this.playersPos = [];
   this.players = [];
   this.self = 0;
+  this.hud = {};
+  this.board = {width: 0};
   this.player = {
     inputs: {
       upArrow: {condition: false, key: 38},
@@ -51,10 +53,11 @@ GameMaster.prototype.draw = function() {
   ctx.fillStyle = "#fff";
   ctx.fillRect(0,0,50,50);
   //console.log('drawn');
+  this.hudInit();
 };
 GameMaster.prototype.reDraw = function() {
   this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  this.addTiledBackground('/assets/metal_floor_tiles.jpg', 59, 118, 58, 58);
+  this.addTiledBackground('/assets/metal_floor_tiles.jpg', 118, 58, 58, 58);
   var players = this.playersPos;
   var self = this.findPlayer(this.self);
   for(var i = 0; i < players.length; i++) {
@@ -81,7 +84,7 @@ GameMaster.prototype.reDraw = function() {
     this.ctx.stroke();
   }
   this.drawBullets();
-
+  this.hudUpdate();
 }
 GameMaster.prototype.drawBullets = function() {
   var bullets =  this.bullets;
@@ -130,6 +133,7 @@ GameMaster.prototype.updatePlayers = function(data) {
     console.log('board changed');
     this.canvas.width = data.board.width;
     this.canvas.height = data.board.height;
+    this.board =  data.board;
   }
   if(this.players.length > 0) {
     var self = this.findPlayer(this.self);
@@ -151,8 +155,11 @@ GameMaster.prototype.updatePlayers = function(data) {
 //  if(condition ) {
 //    servSelf.x = x;
 //    servSelf.y = y;
-//  }
-  this.pingServer();
+//  
+  if(data.ping === 1) {
+    this.pingServer();
+  }
+  
   //this.reDraw();
 }
 GameMaster.prototype.clientOnNetMessage = function(data) {
@@ -351,7 +358,7 @@ GameMaster.prototype.processPlayerPhysics = function(input, dt) {
   var akey =65;
   var dkey = 68;
   var skey = 83;
-  var speed = 50 / 1000
+  var speed = player.atts.speed / 1000
   switch(input.key) {
     case upArrow: 
     case wkey:
@@ -385,7 +392,6 @@ GameMaster.prototype.processPlayerInput = function(key, condition) {
   var dkey = 68;
   var skey = 83;
   var spaceBar = 32;
-  console.log(key);
   switch(key) {
     case upArrow:
     case wkey:
@@ -427,7 +433,6 @@ GameMaster.prototype.findPlayer = function(id) {
   return false;
 }
 GameMaster.prototype.mouseDown = function(event) {
-    console.log(event);
   this.sendMouseToServer('mousedown', 1, event.clientX, event.clientY);
 }
 GameMaster.prototype.mouseUp = function(event) {
@@ -437,3 +442,18 @@ GameMaster.prototype.pingServer = function() {
   var player = this.self;
   this.socket.send('c.l.'+player);
 }
+GameMaster.prototype.hudInit = function() {
+  var hud = this.hud;
+  hud.height = 20;
+  
+};
+GameMaster.prototype.hudUpdate =  function(data) {
+  var hud = this.hud
+  var ctx = this.ctx;
+  hud.latency = this.findPlayer(this.self).ping+'ms';
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,this.board.width, 30);
+  ctx.fillStyle = 'green';
+  ctx.font="14px Verdana";
+  ctx.fillText('lat: '+hud.latency, 10, 20);
+} 
