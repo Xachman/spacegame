@@ -161,6 +161,8 @@ GameMaster.prototype.updatePlayers = function(data) {
     //console.log('condition met');
     self.x = x;
     self.y = y;
+  }else{
+    console.log('condition met');
   }
   if(data.ping === 1) {
     this.pingServer();

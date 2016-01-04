@@ -217,7 +217,7 @@ gameServer.processInput = function(id, key, condition, inputId, timestamp){
   var player = this.findPlayer(id);
   var con = parseInt(condition);
   if(con === 1 && this.checkKey(player, key)) {
-    player.atts.inputs.push({key: key, timestamp: timestamp, condition: con, inputId: inputId});
+    player.atts.inputs.push({key: key, timestamp: timestamp, condition: con});
   }else if(con === 0){
     var input  = this.findPlayerInput(player, key, 1);
     input.condition = con;
