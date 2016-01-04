@@ -149,7 +149,7 @@ GameMaster.prototype.updatePlayers = function(data) {
   this.players = players;
   // self from server
 
-  //var servSelf = this.findPlayer(this.self);
+  var servSelf = this.findPlayer(this.self);
 
   //condition = x <= servSelf.x + 10  && x >= servSelf.x - 10 && y <= servSelf.y + 10 && y >= servSelf.y - 10;
 
@@ -159,8 +159,8 @@ GameMaster.prototype.updatePlayers = function(data) {
 
   if(self && this.players.length > 0 && self.atts.inputId !== this.inputId) {
     //console.log('condition met');
-    self.x = x;
-    self.y = y;
+    servSelf.x = x;
+    servSelf.y = y;
   }else{
     console.log('condition met');
   }
