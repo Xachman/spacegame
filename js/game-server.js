@@ -67,7 +67,7 @@ gameServer.processMessage = function(data) {
     case 'c':
       switch(type) {
         case 'i':
-          this.processInput(commands[2], commands[3], commands[4], commands[5]);
+          this.processInput(commands[2], commands[3], commands[4], commands[5], commands[6]);
         break;
         case 'm':
             this.processMouseInput(commands[2], commands[3], commands[4], commands[5], commands[6], commands[7]);
@@ -211,15 +211,18 @@ gameServer.findBullet = function(id) {
   return false;
 }
 
-gameServer.processInput = function(id, key, condition, timestamp){
+gameServer.processInput = function(id, key, condition, inputId, timestamp){
+  //console.log(inputId);
+  inputId = parseInt(inputId);
   var player = this.findPlayer(id);
   var con = parseInt(condition);
   if(con === 1 && this.checkKey(player, key)) {
-    player.atts.inputs.push({key: key, timestamp: timestamp, condition: con});
+    player.atts.inputs.push({key: key, timestamp: timestamp, condition: con, inputId: inputId});
   }else if(con === 0){
     var input  = this.findPlayerInput(player, key, 1);
     input.condition = con;
-    input.endTime =  timestamp;
+    input.endTime =  timestamp
+    input.inputId = inputId;
   }
 };
 gameServer.findPlayerInput =  function(player, key, condition) {
@@ -238,6 +241,7 @@ gameServer.processInputs = function() {
     var player = players[i];
     var inputs = player.atts.inputs;
     for(var x = 0; x < inputs.length; x++) {
+      player.atts.inputId = inputs[x].inputId;
       this.processPhysics(player.userid, inputs[x].key);
     }
   }
@@ -296,6 +300,7 @@ gameServer.playerJoin =  function(player){
     speed: 50,
     inputs: [],
     color: '#'+Math.floor(Math.random()*16777215).toString(16),
+    inputId: 0,
     alive: {condition: true, time: 0}
   }
   player.clientState.width = player.atts.width;

@@ -5,6 +5,7 @@ function GameMaster(instance) {
   if(!this.server) {
     this.clientConnect();
   }
+  this.inputId = 0;
   this.packages = [];
   this.playersPos = [];
   this.players = [];
@@ -148,14 +149,19 @@ GameMaster.prototype.updatePlayers = function(data) {
   this.players = players;
   // self from server
 
-  var servSelf = this.findPlayer(this.self);
+  //var servSelf = this.findPlayer(this.self);
 
   //condition = x <= servSelf.x + 10  && x >= servSelf.x - 10 && y <= servSelf.y + 10 && y >= servSelf.y - 10;
 
 //  if(condition ) {
 //    servSelf.x = x;
 //    servSelf.y = y;
-//  
+
+  if(self && this.players.length > 0 && self.atts.inputId !== this.inputId) {
+    //console.log('condition met');
+    self.x = x;
+    self.y = y;
+  }
   if(data.ping === 1) {
     this.pingServer();
   }
@@ -286,7 +292,9 @@ GameMaster.prototype.keyUp = function(e) {
 }
 
 GameMaster.prototype.sendToServer = function(key, condition) {
-  this.socket.send('c.i.'+this.self+'.'+key+'.'+condition);
+  this.inputId++;
+  var inputId = this.inputId;
+  this.socket.send('c.i.'+this.self+'.'+key+'.'+condition+'.'+inputId);
 }
 GameMaster.prototype.sendMouseToServer = function(key, condition, x, y) {
   this.socket.send('c.m.'+this.self+'.'+key+'.'+condition+'.'+x+'.'+y);
