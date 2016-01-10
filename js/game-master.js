@@ -162,7 +162,7 @@ GameMaster.prototype.updatePlayers = function(data) {
     servSelf.x = x;
     servSelf.y = y;
   }else{
-    console.log('condition met');
+   // console.log('condition met');
   }
   if(data.ping === 1) {
     this.pingServer();
@@ -360,6 +360,8 @@ GameMaster.prototype.processPlayerSelfPhysics = function(dt) {
 }
 GameMaster.prototype.processPlayerPhysics = function(input, dt) {
   var player = this.findPlayer(this.self);
+  //console.log(player);
+  if(!player) return;
   var upArrow = 38;
   var leftArrow = 37;
   var rightArrow = 39;
@@ -368,7 +370,7 @@ GameMaster.prototype.processPlayerPhysics = function(input, dt) {
   var akey =65;
   var dkey = 68;
   var skey = 83;
-  var speed = player.atts.speed / 1000
+  var speed = player.atts.speed / 1000;
   switch(input.key) {
     case upArrow: 
     case wkey:
