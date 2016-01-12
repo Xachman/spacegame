@@ -1,0 +1,25 @@
+@import "../sass-inc/normalize.scss";
+@import "../sass-inc/foundation.min.scss";
+body {
+    background: #444;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    &.index {
+        color: #fff;
+    }
+}
+h1, h2, h3, h4, h5, h6 {
+    color: #fff;
+}
+label {
+    color: #fff;
+}
+input[name="color"] {
+    padding: 2.5px;
+}
+#canvas {
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    margin: auto;
+}

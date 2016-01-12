@@ -4,14 +4,21 @@ var UUID    = require('node-uuid');
 var http    = require('http');
 var app     = express();
 var server  = http.createServer(app);
+var bodyParser = require('body-parser');
+var jade = require('jade');
 //var players = [];
+app.use(bodyParser.urlencoded({ extended: false }))
 var gameServer  = require('./js/game-server.js');
-
+//app.use(bodyParser());
+app.set('view engine', 'jade');
 app.get('/', function(req, res) {
-  res.sendFile(__dirname+'/public/index.html');
+  //res.sendFile(__dirname+'/public/start.html');
+  res.render('index');
 })
 
-
+app.post('/start', function(req, res) {
+    res.render('start', req.body );
+})
 app.get('/*', function(req, res){
   var file = req.params[0];
   //console.log('\t :: Express :: file requested : ' + file);
@@ -24,6 +31,7 @@ sio = io.listen(server);
 gameServer.io =  sio;
 sio.on('connection', function(client) {
   client.userid = UUID();
+  //console.log(client);
 //  players.push(client.userid); test
   client.emit('onconnected', { id: client.userid } );
   //gameServer.findGame(client);

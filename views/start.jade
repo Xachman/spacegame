@@ -1,0 +1,21 @@
+//- 
+    To change this license header, choose License Headers in Project Properties.
+    To change this template file, choose Tools | Templates
+    and open the template in the editor.
+     
+
+html
+    head
+        title Real Time Game
+        link(rel="stylesheet", href="/css/styles.css")
+        script(type="text/javascript" src="/js/game-master.js")
+        script(type="text/javascript" src="/socket.io/socket.io.js")
+        script.
+            playerColor="#{color}";
+            playerName="#{name}";
+            
+    body(id="body")
+        div(id="gameDiv")
+            canvas(id="gameCan" width="400" height="450" style="background: #000; max-width: 100%") 
+        script(type="text/javascript" src="/js/client.js")
+        

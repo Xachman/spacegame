@@ -63,6 +63,7 @@ gameServer.processMessage = function(data) {
   var commands  = data.split('.');
   var command   = commands[0];
   var type      = commands[1];
+  console.log(data);
   switch(command) {
     case 'c':
       switch(type) {
@@ -75,10 +76,20 @@ gameServer.processMessage = function(data) {
         case 'l':
             this.processLatency(commands[2]);
         break;
+        case 'in':
+            this.processInit(commands[2], commands[3], commands[4]);
+        break;
       }
       break;
   }
 };
+gameServer.processInit = function(color, name, uid) {
+    console.log('The id: '+uid);
+    var player = this.findPlayer(uid);
+    console.log(name);
+    player.atts.color = color;
+    player.atts.name = name;
+}
 gameServer.processLatency = function(id) {
   var player = this.findPlayer(id);
   player.clientState.ping = Date.now() - this.pingPlayersTime;

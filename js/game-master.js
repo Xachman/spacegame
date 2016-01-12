@@ -2,9 +2,6 @@ function GameMaster(instance) {
 
   this.instance = instance;
   this.server = this.instance !== "undefined";
-  if(!this.server) {
-    this.clientConnect();
-  }
   this.inputId = 0;
   this.packages = [];
   this.playersPos = [];
@@ -22,21 +19,11 @@ function GameMaster(instance) {
   }
   this.bullets = [];
   this.onconnect = function(data) {
-    //console.log(data);
+    console.log(data);
     this.self = data.id;
   };
 
 }
-
-GameMaster.prototype.clientConnect = function() {
-  this.socket = io();
-
-  this.socket.on('onconnected', function(data){
-  //  console.log('hi');
-    this.onconnect(data);
-  });
-
-};
 
 GameMaster.prototype.startGame = function() {
   if(this.server) {
@@ -68,8 +55,10 @@ GameMaster.prototype.reDraw = function() {
     }else{
       //console.log(player.x);
     }
+    var name = "test";
   //  console.log(player.x+', '+player.y);
     if(typeof player.atts !== 'undefined') var color = player.atts.color;
+    if(typeof player.atts !== 'undefined') name = player.atts.name;
     else var color = '#fff';
     //console.log(player.atts.color);
     this.ctx.fillStyle = color;
@@ -83,6 +72,7 @@ GameMaster.prototype.reDraw = function() {
     this.ctx.lineTo(player.x, player.y);
     this.ctx.strokeStyle="#7CFC00";
     this.ctx.stroke();
+    this.ctx.strokeText(name,(player.x + player.width / 2) - this.ctx.measureText(name).width / 2,player.y - 10);
   }
   this.drawBullets();
   this.hudUpdate();
@@ -263,6 +253,7 @@ GameMaster.prototype.clientConnectServer = function(data) {
     player.id = data.id;
     GM.onconnect(data);
     GM.draw();
+    GM.sendInit(playerColor, playerName, data.id);
   });
   sio.on('message', this.clientOnNetMessage.bind(this));
 };
@@ -304,7 +295,9 @@ GameMaster.prototype.sendMouseToServer = function(key, condition, x, y) {
 if( 'undefined' != typeof global ) {
    // module.exports = global.GameMaster = GameMaster;
 }
-
+GameMaster.prototype.sendInit = function(color, name, id) {
+    this.socket.send('c.in.'+color+'.'+name+'.'+id);
+}
 GameMaster.prototype.updateLoop = function() {
   requestAnimationFrame(this.updateLoop.bind(this));
   var now = new Date().getTime();
