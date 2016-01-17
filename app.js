@@ -7,8 +7,9 @@ var server  = http.createServer(app);
 var bodyParser = require('body-parser');
 var jade = require('jade');
 //var players = [];
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({ extended: false }));
 var gameServer  = require('./js/game-server.js');
+console.log(gameServer);
 //app.use(bodyParser());
 app.set('view engine', 'jade');
 app.get('/', function(req, res) {
@@ -46,6 +47,7 @@ sio.on('connection', function(client) {
   });
   //console.log(players);
   client.on('message', function(client){
+      
     gameServer.processMessage(client);
     //console.log(client);
   //  console.log('client_input');
