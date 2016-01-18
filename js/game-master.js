@@ -1,7 +1,5 @@
-function GameMaster(instance) {
+function GameMaster() {
 
-  this.instance = instance;
-  this.server = this.instance !== "undefined";
   this.inputId = 0;
   this.packages = [];
   this.playersPos = [];
@@ -160,49 +158,7 @@ GameMaster.prototype.updatePlayers = function(data) {
   
   //this.reDraw();
 }
-GameMaster.prototype.clientOnNetMessage = function(data) {
-  //console.log('message from server');
-    var commands = data.split('.', 2);
-    var command = commands[0];
-    var subcommand = commands[1] || null;
-    var commanddata = this.truncateMessage(data);
-  //  console.log('server data: '+commanddata);
-    switch(command) {
-        case 's': //server message
 
-            switch(subcommand) {
-
-                case 'h' : //host a game requested
-                    this.clientOnHostGame(commanddata); break;
-
-                case 'j' : //join a game requested
-                    this.clientOnJoinGame(commanddata); break;
-
-                case 'r' : //ready a game requested
-                    this.client_onreadygame(commanddata); break;
-
-                case 'e' : //end game requested
-                    this.client_ondisconnect(commanddata); break;
-
-                case 'p' : //server ping
-                    this.client_onping(commanddata); break;
-
-                case 'c' : //other player changed colors
-                    this.client_on_otherclientcolorchange(commanddata); break;
-                case 'u':
-                    this.processUpdate(commanddata);
-                    break;
-                case 'pu':
-                    //if(this.players <= 0)
-                    this.updatePlayers(commanddata);
-                    break;
-
-            } //subcommand
-
-        break; //'s'
-    } //command
-
-}; //cli
 GameMaster.prototype.interpolate = function(dt) {
   var positions = this.playersPos;
   var self = this.findPlayer(this.self);
@@ -228,19 +184,7 @@ GameMaster.prototype.interpolate = function(dt) {
     currentPos.y += travelY;
   }
 }
-GameMaster.prototype.truncateMessage = function(str) {
-  var count = 0;
-  for (var i = 0; i < str.length; i++) {
-    if(str.charAt(i) === '.') {
 
-      count++;
-    }
-    if(count === 2) {
-    //  console.log('char');
-      return str.substring(i+1, str.length);
-    }
-  }
-}
 GameMaster.prototype.clientConnectServer = function(data) {
   this.socket = io.connect();
   var player = this.self;

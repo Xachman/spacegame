@@ -8,18 +8,16 @@ var bodyParser = require('body-parser');
 var jade = require('jade');
 //var players = [];
 app.use(bodyParser.urlencoded({ extended: false }));
-var gameServer  = require('./js/game-server.js');
-console.log(gameServer);
-//app.use(bodyParser());
+var gameServer  = require('./serverjs/game-server.js');
 app.set('view engine', 'jade');
 app.get('/', function(req, res) {
   //res.sendFile(__dirname+'/public/start.html');
   res.render('index');
-})
+});
 
-app.post('/start', function(req, res) {
-    res.render('start', req.body );
-})
+app.post('/lobby', function(req, res) {
+    res.render('lobby', req.body );
+});
 app.get('/*', function(req, res){
   var file = req.params[0];
   //console.log('\t :: Express :: file requested : ' + file);
@@ -46,13 +44,12 @@ sio.on('connection', function(client) {
     gameServer.removePlayerById(client.userid);
   });
   //console.log(players);
-  client.on('message', function(client){
-      
-    gameServer.processMessage(client);
+  client.on('message', function(data){
+    // TODO: Find client by id stop sending ids from clients
     //console.log(client);
-  //  console.log('client_input');
+    gameServer.processMessage(data);
   });
 
 })
-gameServer.update();
+//gameServer.update();
 server.listen(80);

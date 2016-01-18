@@ -1,0 +1,33 @@
+//- 
+    To change this license header, choose License Headers in Project Properties.
+    To change this template file, choose Tools | Templates
+    and open the template in the editor.
+     
+
+html
+    head
+        title Real Time Game
+        link(rel="stylesheet", href="/css/styles.css")
+        script(type="text/javascript" src="//code.jquery.com/jquery-1.12.0.min.js")
+        script(type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js")
+        script(type="text/javascript" src="/js/game-master.js")
+        script(type="text/javascript" src="/js/connect.js")
+        script(type="text/javascript" src="/socket.io/socket.io.js")
+        script.
+            playerColor="#{color}";
+            playerName="#{name}";
+    body(class="lobby")
+        div(class="columns medium-12")
+            div(class="columns medium-offset-4 medium-4")
+                h3 Join A Game 
+                ul
+                    li
+                        button(type="submit" class="tiny" id="createGame") Create Game
+                div(id="gameList")
+        div(class="form-create-game")
+            h3 Create Game
+            form(method="post" action="addgame")
+                label Game Name
+                input(name="name")
+                button(class="tiny") Submit
+        script(type="text/javascript" src="/js/client-lobby.js")

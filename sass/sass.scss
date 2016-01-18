@@ -1,5 +1,6 @@
 @import "../sass-inc/normalize.scss";
 @import "../sass-inc/foundation.min.scss";
+@import "../sass-inc/mixins.scss";
 body {
     background: #444;
     color: #fff;
@@ -22,4 +23,29 @@ input[name="color"] {
     position: absolute;
     left: 0; right: 0; top: 0; bottom: 0;
     margin: auto;
+}
+.lobby {
+    .form-create-game {
+        height: 122px;
+        background: #888;
+        position: absolute;
+        text-align: center;
+        top: -400px;
+        @include transition(top 0.75s);
+        h3 {
+            background: #DCDCDC;
+            margin-top: 0;
+            color: #222;
+        }
+        input {
+            margin-right: 1em;
+        }
+        form {
+            padding: 1em;
+            padding-top: 0;
+            label {
+                text-align: left;
+            }
+        }
+    }
 }
