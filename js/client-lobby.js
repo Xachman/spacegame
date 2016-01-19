@@ -1,4 +1,4 @@
-con = new Connection();
+var con = new Connection();
 //This is all that needs
 con.connectToServer();
 
@@ -17,24 +17,44 @@ $('.form-create-game form button').click(function(e){
     
 });
 
-$(document).on('gamecreated', function() {
-    $('.form-create-game').css({
-        top: '-400px'
-    });
-});
-
-function updateLobby(data) {
+function updateLobby() {
     var gamelist = $('#gameList');
     gamelist.html('');
-    data = JSON.parse(data);
-    console.log(data);
+    data = con.lobbyData;
+    console.log(data);    
     html = '<div class="games">';
     for(var i = 0; i < data.length; i++) {
         html += '<div class="game">';
+        html += '<div class="columns small-6 ">';
         html += '<div class="game-title">'+data[i].name+'</div>';
         html += '<div class="players">'+data[i].players.length+'</div>';
+        html += '</div>';
+        if(con.findPlayerId(data[i].players)) {
+            html += '<div class="columns small-6 ">';
+            html += '<button class="tiny start">Start Game</button>';
+        }else{
+            html += '<div class="columns small-6 ">';
+            html += '<button class="tiny join">Join Game</button>';
+        }
+        html += '</div>';
         html += '</div>';
     }
     html += '</div>';
     gamelist.html(html);
+}
+
+function gameCreated(data) {
+    var form = $('.form-create-game');
+    data = JSON.parse(data);
+    if(typeof data.message !== "undefined") {
+        form.append('<div class="message"></div>');
+        form.find('.message').html(data.message);
+        setTimeout(function(){
+            form.css({
+                top: '-400px'
+            });
+            form.find('.message').remove();
+        }, 1000);
+       
+    }
 }

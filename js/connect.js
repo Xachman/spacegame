@@ -4,6 +4,8 @@
 
 var Connection = function() {
     this.id = 0;
+    this.self = {};
+    this.lobbyData = [];
 };
 
 Connection.prototype.connectToServer = function (data) {
@@ -41,17 +43,19 @@ Connection.prototype.onNetMessage = function(data) {
                     break;
                 case 'pu':
                     //if(this.players <= 0)
-                    //this.updatePlayers(commanddata);
+                    this.updatePlayer(commanddata);
+                    updateLobby();
                     break;
                 case 'in':
                     //if(this.players <= 0)
                     this.serverInitResponse(commanddata);
                     break;
                 case 'ng':
-                    $(document).trigger('gamecreated');
+                    gameCreated(commanddata);
                 break;
                 case 'gu':
-                    updateLobby(commanddata);
+                    this.lobbyData = JSON.parse(commanddata);
+                    updateLobby();
                 break;
             } //subcommand
         break; //'s'
@@ -73,4 +77,19 @@ Connection.prototype.truncateMessage = function(str) {
 }
 Connection.prototype.serverInitResponse = function(data) {
     console.log(data);
+}
+
+Connection.prototype.updatePlayer = function(data) {
+    console.log(data);
+    data = JSON.parse(data);
+    this.self = data.self;
+}
+Connection.prototype.findPlayerId = function(players) {
+    console.log(players);
+    for(var i = 0; i < players.length; i++) {
+        if(players[i] === this.id) {
+           return true;
+        }
+    }
+    return false;
 }
