@@ -55,4 +55,4 @@ sio.on('connection', function(client) {
 
 })
 gameServer.update();
-server.listen(80);
+server.listen(3000);
