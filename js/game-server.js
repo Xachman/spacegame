@@ -168,8 +168,8 @@ gameServer.clearInputs = function (player) {
 }
 gameServer.playerJoin = function (player) {
     player.clientState = {};
-    player.clientState.x = Math.floor((Math.random() * 350) + 1);
-    player.clientState.y = Math.floor((Math.random() * 350) + 1);
+    player.clientState.x = Math.floor((Math.random() * this.board.width) + 1);
+    player.clientState.y = Math.floor((Math.random() * this.board.height) + 1);
     player.clientState.id = player.userid;
     player.atts = {
         width: 50,
