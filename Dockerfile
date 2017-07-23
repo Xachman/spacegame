@@ -8,6 +8,7 @@ WORKDIR /usr/src/app
 COPY package.json /usr/src/app/
 RUN npm install
 
+ENV PATH="/usr/src/app/node_modules/.bin:${PATH}"
 # Bundle app source
 COPY . /usr/src/app
 

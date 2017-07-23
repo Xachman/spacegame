@@ -4,3 +4,7 @@ web:
     - 0:3000
   environment:
     - VIRTUAL_HOST=spacegame.dev
+  volumes:
+    - ./:/usr/src/app
+    - /usr/src/app/node_modules
+  
