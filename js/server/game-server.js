@@ -1,6 +1,6 @@
 var UUID = require('node-uuid');
 var verbose = true;
-var physics = require('./physics.js');
+var physics = require('../physics.js');
 var messages = require('./message-processes.js');
 var gameServer = {};
 
@@ -21,17 +21,7 @@ gameServer.pingPlayersTime = 0;
 //   speed: 50,
 //   inputs: []
 // };
-gameServer.createGame = function (player) {
-    var thegame = {
-        id: UUID(),
-        player_host: player,
-        player_client: null,
-        player_count: 1
-    }
-    this.games[thegame.id] = thegame;
-    this.gameCount++;
-    thegame.gameMaster = new GameMaster(thegame);
-}
+
 gameServer.update = function () {
     setTimeout(this.update.bind(this), 100);
     this.updatedPlayers();

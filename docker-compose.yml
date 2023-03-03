@@ -1,9 +1,9 @@
-web:
-  build: .
-  ports:
-    - 0:3000
-  environment:
-    - VIRTUAL_HOST=spacegame.dev
-  volumes:
-    - ./:/usr/src/app
-    - /usr/src/app/node_modules
+version: "3.3"
+services:
+  web:
+    build: .
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules

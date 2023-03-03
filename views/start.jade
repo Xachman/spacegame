@@ -8,7 +8,7 @@ html
     head
         title Real Time Game
         link(rel="stylesheet", href="/css/styles.css")
-        script(type="text/javascript" src="/js/game-master.js")
+        script(type="text/javascript" src="/js/client/game-master.js")
         script(type="text/javascript" src="/socket.io/socket.io.js")
         script.
             playerColor="#{color}";
@@ -17,5 +17,5 @@ html
     body(id="body")
         div(id="gameDiv")
             canvas(id="gameCan" width="400" height="450" style="background: #000; max-width: 100%") 
-        script(type="text/javascript" src="/js/client.js")
+        script(type="text/javascript" src="/js/client/client.js")
         

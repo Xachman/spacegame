@@ -8,7 +8,7 @@ var bodyParser = require('body-parser');
 var jade = require('jade');
 //var players = [];
 app.use(bodyParser.urlencoded({ extended: false }));
-var gameServer  = require('./js/game-server.js');
+var gameServer  = require('./js/server/game-server.js');
 console.log(gameServer);
 //app.use(bodyParser());
 app.set('view engine', 'jade');
